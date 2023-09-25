@@ -1,5 +1,2 @@
-src/weights/roach filter=lfs diff=lfs merge=lfs -text
-src/weights/tcp filter=lfs diff=lfs merge=lfs -text
-src/weights/interfuser filter=lfs diff=lfs merge=lfs -text
-videos/testing_route_eval filter=lfs diff=lfs merge=lfs -text
-videos/training_route_eval filter=lfs diff=lfs merge=lfs -text
+src/weights/** filter=lfs diff=lfs merge=lfs -text
+videos/** filter=lfs diff=lfs merge=lfs -text
