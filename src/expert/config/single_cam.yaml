@@ -1,0 +1,41 @@
+carla_fps: 20
+eval_freq: 1
+save_freq: 10
+n_waypoints: 10
+yaw_noise: 0.0
+
+brain:
+  main: "expert"
+  expert:
+    time_margin: 2
+    dist_margin: 2
+    stop_sign:
+      speed_thresh: 0.1
+      valid_steps: 50
+
+distance:
+  vehicle: 50
+  walker: 50
+  traffic_light: 75
+  stop_sign: 50
+
+sensor:
+  front_only: true
+  camera:
+    x: -1.5
+    y: 0.0
+    z: 2.0
+    width: 900
+    height: 256
+    fov: 100
+  lidar:
+    x: 0.0
+    y: 0.0
+    z: 2.5
+  topdown:
+    x: 0.0
+    y: 0.0
+    z: 100.0
+    width: 500
+    height: 500
+    focal_length: 500   # best to have pixel per meter (focal_length / z) to be an integer value

@@ -1,0 +1,56 @@
+run_name: "lmdrive_tcp"
+carla_fps: 20
+eval_freq: 1
+save_freq: 10
+time_margin: 2
+dist_margin: 2
+n_waypoints: 10
+yaw_noise: 0.0
+
+replay_buffer_size: 4096
+on_policy_buffer_size: 64
+batch_size: 256
+
+brain:
+  main: "langprop"
+  baseline_agent: ./baselines/tcp/learner/tcp_agent.py
+  baseline_config: ./weights/tcp/TCP.ckpt
+  policy_checkpoint: "~/code/CarlaCode/lm_logs/bbox_model_20230711_153407/ckpt/001/predict_slow_and_stop"
+
+run_config:
+  n_responses: 2
+  n_top_choices: 1
+  max_keep: 16
+
+distance:
+  vehicle: 50
+  walker: 50
+  traffic_light: 75
+  stop_sign: 50
+
+stop_sign:
+  speed_thresh: 0.05
+  valid_steps: 50
+
+sensor:
+  front_only: true
+  camera:
+    x: -1.5
+    y: 0.0
+    z: 2.0
+    width: 900
+    height: 256
+    fov: 100
+  lidar:
+    x: 0.0
+    y: 0.0
+    z: 2.5
+  topdown:
+    x: 0.0
+    y: 0.0
+    z: 100.0
+    width: 500
+    height: 500
+    focal_length: 500   # best to have pixel per meter (focal_length / z) to be an integer value
+  map:
+    rgb_front: "rgb"

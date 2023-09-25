@@ -1,0 +1,63 @@
+%% SYSTEM
+You are an extremely talented AI researcher who is highly competent of solving challenging tasks.
+You are a prominent computer scientist and researcher known for your significant contributions to the fields of artificial intelligence and deep learning.
+You are currently the Director of AI and Autopilot Vision, where you lead the development of advanced neural networks for self-driving cars.
+You have many years of experiences in programming and you can solve any problem.
+
+%% USER
+We are developing code for a self-driving car. We need to produce a function that takes the scene information and predicts a valid target speed level and steering angle for the vehicle.
+I want you to help me write code that decides when moving, slowing, stopping and steering is needed so that it can perfectly drives the vehicle.
+
+Here is the definition of the function.
+
+```
+Given a dictionary of objects in the scene, returns either "MOVE", "SLOW", or "STOP" for the speed level, depending on how fast the vehicle should move, as well as the ego vehicle steering angle to reach the target location.
+Return "STOP" if the agent needs to stop completely and immediately because there is a red traffic light, uncompleted stop signs, vehicles or pedestrians immediately in front of the vehicle so that the vehicle cannot move without collisions.
+Return "SLOW" if the agent doesn't need to stop immediately but should slow down either because there are vehicles or pedestrians in collision course if the vehicle kept moving, or if there is a red traffic light or uncompleted stop signs ahead that is affecting the vehicle.
+Return "MOVE" if the agent doesn't need to stop or slow. The agent should be moving by default.
+The steering angle should be computed so that the ego vehicle can reach the target location, starting at the current ego vehicle location.
+Both the ego location and the target location are given in world coordinates. The steering angle should be returned relative to the ego vehicle's current orientation.
+
+Args:
+    - scene_info: dict
+        Contains the following information:
+            {
+                "ego_location_world_coord": np.ndarray,         # numpy array of shape (2,) which contains (x, y) of the center location of the ego vehicle in world coordinates given in [m]
+                "ego_target_location_world_coord": np.ndarray,  # numpy array of shape (2,) which contains (x, y) of the target location of the ego vehicle in world coordinates given in [m]
+                "ego_orientation_unit_vector": np.ndarray,      # numpy array of shape (2,) which contains (x, y) of unit vector orientation of the ego vehicle in world coordinates. The vehicle moves in the direction of the orientation.
+                "ego_forward_speed": float,                     # the speed of the ego vehicle given in [m/s].
+                "ego_length": float,                            # length of the ego vehicle in the orientation direction, given in [m/s].
+                "ego_width": float,                             # width of the ego vehicle perpendicular to the orientation direction, given in [m].
+                "distance_to_red_light": float or None,         # distance to red light given in [m]. None if no traffic lights are affecting the ego vehicle
+                "distance_to_stop_sign": float or None,         # distance to stop sign given in [m]. None if no stop signs are affecting the ego vehicle
+                "vehicles": {                       # dictionary of nearby vehicles
+                    <vehicle_id: int>:  {
+                        "location_world_coord": np.ndarray,     # numpy array of shape (2,) which contains (x, y) of the center location of vehicle <vehicle_id> in world coordinates given in [m]
+                        "orientation_unit_vector": np.ndarray,  # numpy array of shape (2,) which contains (x, y) of unit vector orientation of vehicle <vehicle_id> in world coordinates. The vehicle moves in the direction of the orientation.
+                        "forward_speed": float,                 # speed of vehicle <vehicle_id> given in [m/s].
+                        "forward_length": float,                # length of the vehicle <vehicle_id> along the orientation direction, given in [m].
+                        "sideways_width": float,                # width of the vehicle <vehicle_id> perpendicular to the orientation direction, given in [m].
+                    },
+                },
+                "pedestrians": {                    # dictionary of nearby pedestrians
+                    <pedestrian_id: int>:  {
+                        "location_world_coord": np.ndarray,     # numpy array of shape (2,) which contains (x, y) of the center location of pedestrian <pedestrian_id> in world coordinates given in [m]
+                        "orientation_unit_vector": np.ndarray,  # numpy array of shape (2,) which contains (x, y) of unit vector orientation of pedestrian <pedestrian_id> in world coordinates. The vehicle moves in the direction of the orientation.
+                        "forward_speed": float,                 # speed of pedestrian <pedestrian_id> relative to the orientation given in [m/s].
+                        "forward_length": float,                # length of the pedestrian <pedestrian_id> along the orientation direction, given in [m].
+                        "sideways_width": float,                # width of the pedestrian <pedestrian_id> perpendicular to the orientation direction, given in [m].
+                    },
+                }
+            }
+
+    - persistent_memory: dict
+        This is persistent memory, so you can read and write data that you want to use in future function calls.
+        The persistent memory is empty by default and this function is the only function that can modify it.
+        Make sure that you check whether the key exists the first time you retrieve an item, and handle cases where the memory is empty.
+
+
+Returns:
+    - speed_level: str          # Choose from ("MOVE", "SLOW", "STOP").
+    - steering_angle: float     # Predicted steering angle of the ego vehicle to reach the target waypoint in the range of -180 to 180 degrees
+    - persistent_memory: dict   # Return the persistent memory dictionary. Make sure you only store json serializable items (e.g. int, float, str, tuple, list, dict)
+```

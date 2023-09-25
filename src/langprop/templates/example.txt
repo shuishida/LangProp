@@ -1,0 +1,19 @@
+# In the template engine, every line that begins with "#" is treated as comments.
+# Every line that begins with "$ " or in between "$begin" and "$end" are treated as executable python code, as well as everything inside {{ }}.
+# For example, the template below can be executed with
+# read_template("example", people=["Tom", "Jerry"])
+# and will return the following:
+# """
+# Hello! Welcome to the prompt template!
+# Tom and Jerry are going on a walk.
+# Tom is 1/2 in the list.
+# Jerry is 2/2 in the list.
+# Enjoy coding!
+# """
+Hello! Welcome to the prompt template!
+{{" and ".join(p for p in people)}} {{"are" if len(people) > 1 else "is"}} going on a walk.
+$begin
+for i, p in enumerate(people):
+    print(f"{p} is {i + 1}/{len(people)} in the list.")
+$end
+$ print("Enjoy coding!")

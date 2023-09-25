@@ -1,0 +1,17 @@
+$import _intro.txt
+
+This is a template of the code.
+
+```python
+def {{ function_name }}(scene_info: dict, persistent_memory: dict):
+    # Write code here
+    return speed_level, steering_angle, persistent_memory
+```
+
+$import _notes.txt
+
+Keeping this in mind, please do the following:
+
+Step 1. Describe the decision process of determining whether you should move, slow down or stop, given the scene_info observation.
+Step 2. Are there any edge cases you can think of? What might be some common failure modes, and how can we prevent them?
+Step 3. Provide a python code solution that implements your strategy, including all necessary import statements. Write descriptive comments for every line of code.

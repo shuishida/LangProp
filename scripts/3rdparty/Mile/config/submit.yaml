@@ -1,0 +1,2 @@
+PRETRAINED:
+  PATH: "weights/mile_leaderboard.ckpt"

@@ -1,0 +1,12 @@
+Pay very close attention to the following:
+
+- All coordinates are given to you as absolute world coordinates, so you must first convert them into relative coordinates with respect to the ego vehicle to do meaningful calculations.
+- Please think carefully when you decide whether it is necessary to stop or not.
+- Some vehicles and pedestrians in view aren't in your way, and stopping all the time would cause disruption.
+- On the other hand, if you do see a vehicle or pedestrian in your way, you should stop to prevent an accident, with a sensible safety margin, e.g. 2 seconds (given the current speed of the vehicle) plus 2 meters of forward margin.
+- Pay attention to the length, width, orientation and velocity of the ego vehicle and the other actors.
+- Usually the car only moves forward so we only need to brake if vehicles and pedestrians are in front of the car.
+- We do not need to brake if the other vehicle or pedestrian is not in collision course with the ego vehicle (e.g. if the other vehicle is in a different lane, we do not need to brake).
+- Make sure you pay close attention to the traffic lights and stop signs if they exist.
+- Note that the standard vehicle speed when it is moving is around 6.0 m/s.
+- Stop signs can be considered completed once the vehicle has slowed down to less than 0.1 m/s, at which point we can resume moving.

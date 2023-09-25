@@ -1,0 +1,56 @@
+%% SYSTEM
+You are an extremely talented AI researcher who is highly competent of solving challenging tasks.
+You are a prominent computer scientist and researcher known for your significant contributions to the fields of artificial intelligence and deep learning.
+You are currently the Director of AI and Autopilot Vision, where you lead the development of advanced neural networks for self-driving cars.
+You have many years of experiences in programming and you can solve any problem.
+
+%% USER
+I am developing code for a self-driving car. The driving steering is already given.
+However, we still need to determine the speed output of the driving model.
+The vehicle must move whenever it is allowed to do so, but must not collide into any obstacles (vehicles and pedestrians) along the way, and must adhere to traffic lights and stop signs.
+I want you to help me write code that decides whether the vehicle should move, slow or stop.
+
+Here is the definition of the function.
+
+```
+Given a dictionary of objects in the scene, returns either "MOVE", "SLOW", or "STOP" depending on how fast the vehicle should move.
+Return "STOP" if the agent needs to stop completely and immediately because there is a red traffic light, uncompleted stop signs, vehicles or pedestrians immediately in front of the vehicle so that the vehicle cannot move without collisions.
+Return "SLOW" if the agent doesn't need to stop immediately but should slow down either because there are vehicles or pedestrians in collision course if the vehicle kept moving, or if there is a red traffic light or uncompleted stop signs ahead that is affecting the vehicle.
+Return "MOVE" if the agent doesn't need to stop or slow. The agent should be moving by default.
+
+Args:
+    - scene_info: dict
+        Contains the following information:
+            {
+                "current_speed": float,                     # the speed of the ego vehicle given in [m/s]
+                "ego_steering": float,                      # the steering of the ego vehicle given in [radian].
+                "distance_to_red_light": float or None,     # given in meters. None if no traffic lights are affecting the ego vehicle
+                "distance_to_stop_sign": float or None,     # given in meters. None if no stop signs are affecting the ego vehicle
+                "vehicles": {
+                    <vehicle_id: int>:  {
+                        "location_x": float,    # how far forward the other vehicle is in the ego vehicle frame given in [m] (x > 0: other vehicle is in front of ego, x < 0: other vehicle is behind of ego)
+                        "location_y": float,    # how far right the other vehicle is in the ego vehicle frame given in [m] (y > 0: other vehicle is to the right of ego, y < 0: other vehicle is to the left of ego)
+                        "velocity_x": float,    # how fast the other vehicle is moving in the x direction given in [m/s] (forward-axis) in meters in the ego vehicle frame (positive x: forward direction of ego vehicle)
+                        "velocity_y": float,    # how fast the other vehicle is moving in the y direction given in [m/s] (right-axis) in meters, relative to the ego vehicle frame (positive y: right hand direction of ego vehicle)
+                    },
+                },
+                "pedestrians": {
+                    <pedestrian_id: int>:  {
+                        "location_x": float,    # how far forward the pedestrian is in the ego vehicle frame given in [m] (x > 0: pedestrian is in front of ego, x < 0: pedestrian is behind of ego)
+                        "location_y": float,    # how far right the pedestrian is in the ego vehicle frame given in [m] (y > 0: pedestrian is to the right of ego, y < 0: pedestrian is to the left of ego)
+                        "velocity_x": float,    # how fast the pedestrian is moving in the x direction given in [m/s] (forward-axis) in meters in the ego vehicle frame (positive x: forward direction of ego vehicle)
+                        "velocity_y": float,    # how fast the pedestrian is moving in the y direction given in [m/s] (right-axis) in meters, relative to the ego vehicle frame (positive y: right hand direction of ego vehicle)
+                    },
+                }
+            }
+
+    - persistent_memory: dict
+        This is persistent memory, so you can read and write data that you want to use in future function calls.
+        The persistent memory is empty by default and this function is the only function that can modify it.
+        Make sure that you check whether the key exists the first time you retrieve an item, and handle cases where the memory is empty.
+
+
+Returns:
+    - speed_level: str          # Choose from ("MOVE", "SLOW", "STOP").
+    - persistent_memory: dict   # Return the persistent memory dictionary. Make sure you only store json serializable items (e.g. int, float, str, tuple, list, dict)
+```

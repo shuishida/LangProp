@@ -1,0 +1,38 @@
+$begin
+if len(modules) > 1:
+    print("You can assume that you have access to the following helper functions.")
+    print()
+    print("```python")
+    for i, module in enumerate(modules.values()):
+        if i > 0:
+            print()
+        print(module.config)
+    print("```")
+$end
+
+If you use any of these functions, import the names of the functions in the python code, each in a new line, as follows:
+
+```python
+import function_1
+import function_2
+...
+```
+
+If you need any additional helper functions, just define each function with a docstring like the following, clearly defining the input and output requirements:
+
+```python
+def helper_function(arg1, arg2, ...):
+    """
+    description...
+
+    Args:
+    - arg1: ...
+    - arg2: ...
+
+    Returns:
+    - out1: ...
+    - out2: ...
+    """
+    # Write code here
+    return out1, out2, ...
+```

@@ -1,0 +1,71 @@
+$import _intro.txt
+
+Here is an example code that I have written. However, it is not working as expected.
+
+```python
+{{ code }}
+```
+
+I executed the code, and got an accuracy of {{ int(avg_score * 100) }}%.
+
+$begin
+if printed:
+    print("There was a print message saying: {{ printed }}")
+if exception:
+    print("""
+The code failed to run because there was an exception.
+The exception message was as follows:
+{{ exception }}
+
+The inputs to the function were the following:
+Inputs:
+    - scene_info: {args[0]}
+    - persistent_memory: {args[1]}
+
+Resolving this exception is the top priority.
+""")
+else:
+    pred_speed_level, pred_steering, pred_persistent_memory = outputs
+
+    if {{ same_outputs }}:
+        print(f"It also seems that the code produces the same output of ```{pred_speed_level}``` for all inputs, which is not the behaviour we want.")
+
+    print(f"""
+
+The code produced incorrect results for the following inputs. The prediction, ground truth label and score were as follows.
+
+Inputs:
+    - scene_info: {args[0]}
+    - persistent_memory: {args[1]}
+Incorrect output:
+    - pred_speed_level = {pred_speed_level}
+    - pred_steering = {pred_steering}
+    - persistent_memory = {pred_persistent_memory}""")
+    if label is not None:
+        gt_speed_level, gt_steering = label
+        print("""
+Ground truth label:
+    - gt_speed_level = {gt_speed_level}
+    - gt_steering = {gt_steering}""")
+    print("Score: {{ int(score * 100) }}%")
+$end
+
+$begin
+if feedback:
+    print("""\n{{ feedback }}\n""")
+$end
+
+$import _notes.txt
+
+Keeping this in mind, please do the following:
+
+$begin
+if exception:
+    print("Step 1. Look at the error message carefully and identify the reason why the code failed, and how it can be corrected.")
+else:
+    print("Step 1. Given the example input and output, identify the reason why the code made a wrong prediction, and how it can be corrected to achieve a good driving score.")
+$end
+
+Step 2. Read the code again very carefully. Are there any bugs we've missed? Any edge cases that haven't been considered?
+Step 3. Given the above, please describe step by step what the corrected version of the code should do, making sure that you pay close attention to the edge cases.
+Step 4. Please rewrite the python function `{{ function_name }}` to achieve a higher score, including all necessary import statements. Write descriptive comments for every line of code.

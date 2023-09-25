@@ -1,0 +1,12 @@
+numpy
+matplotlib
+torch
+torchvision
+torchaudio
+tqdm
+wandb
+einops
+typing_extensions
+python-dotenv
+langchain[llms]
+timeout-decorator

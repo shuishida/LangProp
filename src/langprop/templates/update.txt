@@ -1,0 +1,36 @@
+%% SYSTEM
+You are a helpful AI assistant who is highly competent of solving challenging tasks. You have many years of experiences in programming and you can solve any problem.
+
+%% USER
+I am writing a python function and it is not working as expected.
+
+```python
+{{ code }}
+```
+
+I executed the code, and got an accuracy of {{ int(avg_score * 100) }}%.
+
+$begin
+if printed:
+    print("There was a print message saying: {{ printed }}")
+if exception:
+    print("""There was an exception as follows: {{ exception }}""")
+else:
+    if {{ same_outputs }}:
+        print("It also seems that the code produces the same output of ```{{ outputs[0] if outputs else '' }}``` for all inputs, which is not the behavior we want.")
+
+    print("""
+For the worst case input, the input, output, expected output and score were as follows.
+
+Inputs: {{ inputs[0] if inputs else '' }}
+Incorrect code output: {{ outputs[0] if outputs else '' }}
+Score: {{ int(score * 100) }}%""")
+    if {{ label }}:
+        print("Expected output: {{ label }}")
+$end
+
+# This was the feedback you've received: {{ feedback }}
+
+Based on the above information, please rewrite the python function `{{ function_name }}` to achieve a higher score, including all necessary import statements.
+
+$import _helper.txt

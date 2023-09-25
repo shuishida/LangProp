@@ -1,0 +1,26 @@
+[submodule "leaderboard"]
+	path = leaderboard
+	url = https://github.com/carla-simulator/leaderboard.git
+	branch = stable
+[submodule "scenario_runner"]
+	path = scenario_runner
+	url = https://github.com/carla-simulator/scenario_runner.git
+	branch = leaderboard
+[submodule "3rdparty/CarlaRoach"]
+	path = 3rdparty/CarlaRoach
+	url = https://github.com/zhejz/carla-roach.git
+[submodule "3rdparty/Mile"]
+	path = 3rdparty/Mile
+	url = https://github.com/wayveai/mile.git
+[submodule "3rdparty/TCP"]
+	path = 3rdparty/TCP
+	url = https://github.com/OpenDriveLab/TCP.git
+[submodule "3rdparty/Transfuser"]
+	path = 3rdparty/Transfuser
+	url = https://github.com/autonomousvision/transfuser.git
+[submodule "3rdparty/InterFuser"]
+	path = 3rdparty/InterFuser
+	url = https://github.com/opendilab/InterFuser.git
+[submodule "3rdparty/CarlaGarage"]
+	path = 3rdparty/CarlaGarage
+	url = https://github.com/autonomousvision/carla_garage.git

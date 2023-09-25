@@ -1,0 +1,95 @@
+$import _intro.txt
+
+Here is an example code that I have written. However, it is not working as expected.
+
+```python
+{{ code }}
+```
+
+I executed the code, and got an accuracy of {{ int(avg_score * 100) }}%.
+
+$begin
+if printed:
+    print("There was a print message saying: {printed}")
+if exception:
+    print(f"""
+The code failed to run because there was an exception.
+The exception message was as follows:
+{exception}
+
+The inputs to the function were the following:
+
+Inputs:
+    - scene_info: {args[0]}
+
+Resolving this exception is the top priority.
+""")
+else:
+    pred_speed_level, pred_turn_angle = outputs
+
+    print(f"""
+
+The code produced incorrect results for the following inputs. The prediction, ground truth label and score were as follows.
+
+Score: {{ int(score * 100) }}%
+
+Inputs:
+    - scene_info: {args[0]}
+
+Incorrect output:
+    - pred_speed_level = {pred_speed_level}
+    - pred_turn_angle = {pred_turn_angle}""")
+    if label is not None:
+        if label["infractions_ahead"] and label["speed_level"] != label["driver_speed_level"] and pred_speed_level == label["driver_speed_level"]:
+
+            infraction_description = {
+                "COLLISION_STATIC": "This means that the ego vehicle collided into a static object.",
+                "COLLISION_VEHICLE": "This means that the ego vehicle collided with another vehicle.",
+                "COLLISION_PEDESTRIAN": "This means that the ego vehicle collided with a pedestrian.",
+                "ROUTE_DEVIATION": "This means that the ego vehicle failed to track the given route and deviated from the route.",
+                "ROUTE_COMPLETION": "This means that the ego vehicle failed to complete the route.",
+                "TRAFFIC_LIGHT_INFRACTION": "This means that the ego vehicle ignored a red traffic light.",
+                "WRONG_WAY_INFRACTION": "This means that the ego vehicle went into a wrong lane.",
+                "ON_SIDEWALK_INFRACTION": "This means that the ego vehicle went into a sidewalk.",
+                "STOP_INFRACTION": "This means that the ego vehicle ignored a slow sign and went at normal speed.",
+                "OUTSIDE_LANE_INFRACTION": "This means that the ego vehicle went outside the lane.",
+                "OUTSIDE_ROUTE_LANES_INFRACTION": "This means that the ego vehicle didn't follow the lane that it is supposed to follow.",
+                "VEHICLE_BLOCKED": "This means that the ego vehicle was stopping / moving slowly for too long without moving.",
+            }
+
+            infractions = "\n".join([f"{name}: {desc}. {infraction_description[name]}" for name, desc in label["infractions_ahead"]])
+
+            print(f"""
+There was an infraction of the following:
+
+{infractions}
+
+This poses a serious safety hazard and must be resolved immediately.
+""")
+        else:
+            print(f"""
+Ground truth label:
+    - gt_speed_level = {label["speed_level"]}
+    - gt_turn_angle = {label["angle"]}
+""")
+$end
+
+$begin
+if feedback:
+    print("""\n{{ feedback }}\n""")
+$end
+
+$import _notes.txt
+
+Keeping this in mind, please do the following:
+
+$begin
+if exception:
+    print("Step 1. Look at the error message carefully and identify the reason why the code failed, and how it can be corrected.")
+else:
+    print("Step 1. Given the example input and output, identify the reason why the code made a wrong prediction, and how it can be corrected to achieve a good driving score.")
+$end
+
+Step 2. Read the code again very carefully. Are there any bugs we've missed? Any edge cases that haven't been considered?
+Step 3. Given the above, please describe step by step what the corrected version of the code should do, making sure that you pay close attention to the edge cases.
+Step 4. Please rewrite the python function `{{ function_name }}` to achieve a higher score, including all necessary import statements. Write descriptive comments for every line of code.

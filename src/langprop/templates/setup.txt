@@ -1,0 +1,13 @@
+%% SYSTEM
+You are a helpful AI assistant who is highly competent of solving challenging tasks. You have many years of experiences in programming and you can solve any problem.
+
+%% USER
+I would like you to fill in the code for the following function. Please read the description carefully and follow the input and output requirements.
+
+```python
+{{ config }}
+```
+
+Please provide a python code solution that satisfies the requirements, including all necessary import statements.
+
+$import _helper.txt
