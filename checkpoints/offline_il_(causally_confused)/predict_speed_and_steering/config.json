@@ -1,0 +1,186 @@
+{
+    "name": "predict_speed_and_steering",
+    "step": 648,
+    "records": {
+        "0": {
+            "main": {
+                "priority": 0.9459999999999995,
+                "past_priority": 0.93048128342246,
+                "past_weight": 0.0,
+                "count": 1000,
+                "avg_score": 0.9459999999999995
+            }
+        },
+        "1": {
+            "main": {
+                "priority": 0.9459999999999995,
+                "past_priority": 0.93048128342246,
+                "past_weight": 0.0,
+                "count": 1000,
+                "avg_score": 0.9459999999999995
+            }
+        },
+        "2": {
+            "main": {
+                "priority": 0.9459999999999995,
+                "past_priority": 0.93048128342246,
+                "past_weight": 0.0,
+                "count": 1000,
+                "avg_score": 0.9459999999999995
+            }
+        },
+        "3": {
+            "main": {
+                "priority": 0.9459999999999995,
+                "past_priority": 0.93048128342246,
+                "past_weight": 0.0,
+                "count": 1000,
+                "avg_score": 0.9459999999999995
+            }
+        },
+        "4": {
+            "main": {
+                "priority": 0.9459999999999995,
+                "past_priority": 0.93048128342246,
+                "past_weight": 0.0,
+                "count": 1000,
+                "avg_score": 0.9459999999999995
+            }
+        },
+        "5": {
+            "main": {
+                "priority": 0.9459999999999995,
+                "past_priority": 0.93048128342246,
+                "past_weight": 0.0,
+                "count": 1000,
+                "avg_score": 0.9459999999999995
+            }
+        },
+        "6": {
+            "main": {
+                "priority": 0.9459999999999995,
+                "past_priority": 0.93048128342246,
+                "past_weight": 0.0,
+                "count": 1000,
+                "avg_score": 0.9459999999999995
+            }
+        },
+        "7": {
+            "main": {
+                "priority": 0.9459999999999995,
+                "past_priority": 0.93048128342246,
+                "past_weight": 0.0,
+                "count": 1000,
+                "avg_score": 0.9459999999999995
+            }
+        },
+        "8": {
+            "main": {
+                "priority": 0.9459999999999995,
+                "past_priority": 0.925133689839572,
+                "past_weight": 0.0,
+                "count": 1000,
+                "avg_score": 0.9459999999999995
+            }
+        },
+        "9": {
+            "main": {
+                "priority": 0.9459999999999995,
+                "past_priority": 0.925133689839572,
+                "past_weight": 0.0,
+                "count": 1000,
+                "avg_score": 0.9459999999999995
+            }
+        },
+        "10": {
+            "main": {
+                "priority": 0.9459999999999995,
+                "past_priority": 0.925133689839572,
+                "past_weight": 0.0,
+                "count": 1000,
+                "avg_score": 0.9459999999999995
+            }
+        },
+        "11": {
+            "main": {
+                "priority": 0.9459999999999995,
+                "past_priority": 0.925133689839572,
+                "past_weight": 0.0,
+                "count": 1000,
+                "avg_score": 0.9459999999999995
+            }
+        },
+        "12": {
+            "main": {
+                "priority": 0.9459999999999995,
+                "past_priority": 0.925133689839572,
+                "past_weight": 0.0,
+                "count": 1000,
+                "avg_score": 0.9459999999999995
+            }
+        },
+        "13": {
+            "main": {
+                "priority": 0.9459999999999995,
+                "past_priority": 0.925133689839572,
+                "past_weight": 0.0,
+                "count": 1000,
+                "avg_score": 0.9459999999999995
+            }
+        },
+        "14": {
+            "main": {
+                "priority": 0.9459999999999995,
+                "past_priority": 0.925133689839572,
+                "past_weight": 0.0,
+                "count": 1000,
+                "avg_score": 0.9459999999999995
+            }
+        },
+        "15": {
+            "main": {
+                "priority": 0.9459999999999995,
+                "past_priority": 0,
+                "past_weight": 0,
+                "count": 1000,
+                "avg_score": 0.9459999999999995
+            }
+        },
+        "16": {
+            "main": {
+                "priority": 0.9400000000000006,
+                "past_priority": 0.93048128342246,
+                "past_weight": 0.0,
+                "count": 1000,
+                "avg_score": 0.9400000000000006
+            }
+        },
+        "17": {
+            "main": {
+                "priority": -7.504000000000005,
+                "past_priority": 0,
+                "past_weight": 0,
+                "count": 1000,
+                "avg_score": -7.504000000000005
+            }
+        },
+        "18": {
+            "main": {
+                "priority": -9.880000000000008,
+                "past_priority": 0,
+                "past_weight": 0,
+                "count": 1000,
+                "avg_score": -9.880000000000008
+            }
+        },
+        "19": {
+            "main": {
+                "priority": -10.0,
+                "past_priority": 0,
+                "past_weight": 0,
+                "count": 1000,
+                "avg_score": -10.0
+            }
+        }
+    }
+}

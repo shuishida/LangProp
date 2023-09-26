@@ -1,0 +1,166 @@
+import numpy as np
+from typing import List, Tuple, Union, Dict
+
+def predict_speed_and_steering(scene_info: Dict, stopping_time_margin=2.0, 
+reaction_time=1.0, stopping_speed=0.1, slow_speed=2.5, safety_margin=2.0) -> Tuple[str, float]:
+    """
+    Given the state of the scene, finds the required speed level and turn angle of the ego vehicle.
+    
+    Args:
+        scene_info (dict): Contains information about the scene.
+        stopping_time_margin (float): Time margin to determine when to stop in seconds [default: 2.0]
+        reaction_time (float): Time taken to react to external events in seconds [default: 1.0]
+        stopping_speed (float): Minimum speed below which the vehicle should stop in m/s [default: 0.1]
+        slow_speed (float): Speed at which the vehicle should slow down in m/s [default: 2.5]
+        safety_margin (float): Safety margin in meters between the vehicle and other objects [default: 2.0]
+
+    Returns:
+        (str, float): A tuple containing the required speed level and turn angle of the ego vehicle.
+                      The speed level can be "MOVE", "SLOW", or "STOP". The turn angle should be a float between -180 to 180 degrees.
+    """
+    # Step 1: Given the input dictionary, extract all the relevant parameters and convert world coordinates to relative coordinates.
+    ego_location = np.array(scene_info['ego_location_world_coord'])
+    ego_target_location = np.array(scene_info['ego_target_location_world_coord'])
+    ego_orientation = np.array(scene_info['ego_orientation_unit_vector'])
+    ego_forward_speed = scene_info['ego_forward_speed']
+    ego_length = scene_info['ego_length']
+    ego_width = scene_info['ego_width']
+    vehicles = scene_info['vehicles']
+    pedestrians = scene_info['pedestrians']
+    distance_to_stop_sign = scene_info['distance_to_stop_sign']
+    distance_to_red_light = scene_info['distance_to_red_light']
+
+    vehicles_rel = {} # relative coordinates of vehicles
+    for k, v in vehicles.items():
+        location_world = v['location_world_coord']
+        orientation_world = v['orientation_unit_vector']
+        speed = v['forward_speed']
+        length = v['forward_length'] + ego_length
+        width = v['sideways_width'] + ego_width
+        
+        location_rel = location_world - ego_location
+        location_rel_rotated = np.dot(ego_orientation, location_rel)
+        lateral_distance_rel_rotated = np.dot([-ego_orientation[1], ego_orientation[0]], location_rel)
+        vehicles_rel[k] = {'location_rel': location_rel_rotated, 'speed': speed, 'length': length, 'width': width, 'lateral_distance': lateral_distance_rel_rotated}
+    
+    
+    pedestrians_rel = {} # relative coordinates of pedestrians
+    for k, v in pedestrians.items():
+        location_world = v['location_world_coord']
+        orientation_world = v['orientation_unit_vector']
+        speed = v['forward_speed']
+        length = v['forward_length'] + ego_length
+        width = v['sideways_width'] + ego_width
+
+        location_rel = location_world - ego_location
+        location_rel_rotated = np.dot(ego_orientation, location_rel)
+        lateral_distance_rel_rotated = np.dot([-ego_orientation[1], ego_orientation[0]], location_rel)
+        pedestrians_rel[k] = {'location_rel': location_rel_rotated, 'speed': speed, 'length': length, 'width': width, 'lateral_distance': lateral_distance_rel_rotated}
+
+    # Step 2: Compute the Euclidean distance from the ego location to the target location.
+    distance_to_target = np.linalg.norm(ego_target_location - ego_location)
+
+    # Step 3: Compute the threshold stopping distance and threshold slow distance based on the current speed.
+    threshold_stopping_distance = ego_forward_speed * stopping_time_margin + (ego_forward_speed ** 2) / (2 * 0.4) + ego_length / 2 + safety_margin
+    threshold_slow_distance = ego_forward_speed * (stopping_time_margin + reaction_time) + ego_length / 2 + safety_margin
+
+    # Step 4: Check if there is a stop sign and the distance is smaller than the stopping distance. If yes, initiate a stop action if the speed is greater than the stopping speed.
+    if distance_to_stop_sign is not None and distance_to_stop_sign < threshold_stopping_distance:
+        if ego_forward_speed <= stopping_speed:
+            speed_level = "MOVE"
+        else:
+            stopping_speed_current = max(distance_to_stop_sign / 2, stopping_speed)
+            if ego_forward_speed > stopping_speed_current:
+                ego_forward_speed = stopping_speed_current
+                speed_level = "STOP"
+            else:
+                speed_level = "MOVE"
+
+    # Step 5: Check if there is a red light and the distance is smaller than the stopping distance. If yes, initiate a stop action.
+    elif distance_to_red_light is not None and distance_to_red_light < threshold_stopping_distance:
+        speed_level = "STOP"
+
+    # Step 6: Perform collision check with vehicles and pedestrians to determine if a stop or slow action is needed.
+    # Check if there are vehicles or pedestrians in front of the ego vehicle within threshold stopping distance
+    else:
+        if len(vehicles_rel) == 0 and len(pedestrians_rel) == 0:
+            speed_level = "MOVE"
+        else:
+            collision = False
+            min_lateral_distance = float('inf')
+            min_longitudinal_distance = float('inf')
+
+            for k, v in vehicles_rel.items():
+                speed = v['speed']
+                length = v['length']
+                width = v['width']
+                lateral_distance_rel_rotated = v['lateral_distance']
+                longitudinal_distance_rel_rotated = v['location_rel'] - length / 2 - ego_length / 2
+                
+                # If the object is behind ego vehicle, ignore it
+                if longitudinal_distance_rel_rotated > 0:
+                    continue
+                
+                # Check whether the object can be collided with
+                if abs(lateral_distance_rel_rotated) <= width / 2 + ego_width and (-longitudinal_distance_rel_rotated) <= threshold_stopping_distance:
+                    collision = True
+                    if -longitudinal_distance_rel_rotated <= 0:
+                        speed_level = "STOP"
+                        break
+                        
+                # Check whether the object is in ego vehicle's range
+                if abs(lateral_distance_rel_rotated) <= width / 2 + ego_width and (-longitudinal_distance_rel_rotated) <= threshold_slow_distance:
+                    if abs(speed - ego_forward_speed) < 0.5 and speed < ego_forward_speed:
+                        continue
+                    min_longitudinal_distance = min(min_longitudinal_distance, -longitudinal_distance_rel_rotated)
+                    min_lateral_distance = min(min_lateral_distance, width / 2 + ego_width - abs(lateral_distance_rel_rotated))
+                    
+            if not collision:
+                for k, v in pedestrians_rel.items():
+                    speed = v['speed']
+                    length = v['length']
+                    width = v['width']
+                    lateral_distance_rel_rotated = v['lateral_distance']
+                    longitudinal_distance_rel_rotated = v['location_rel'] - length / 2 - ego_length / 2
+
+                    # Check whether the object is behind ego vehicle
+                    if longitudinal_distance_rel_rotated >  0:
+                        continue
+                        
+                    # Check whether the object can be collided with
+                    if abs(lateral_distance_rel_rotated) <= width / 2 + ego_width and (-longitudinal_distance_rel_rotated) <= threshold_stopping_distance:
+                        collision = True
+                        if -longitudinal_distance_rel_rotated <= 0:
+                            speed_level = "STOP"
+                            break
+                        
+                    # Check whether the object is in ego vehicle's range
+                    if abs(lateral_distance_rel_rotated) <= width / 2 + ego_width and (-longitudinal_distance_rel_rotated) <= threshold_slow_distance:
+                        if abs(speed - ego_forward_speed) < 0.5 and speed < ego_forward_speed:
+                            continue
+                        min_longitudinal_distance = min(min_longitudinal_distance, -longitudinal_distance_rel_rotated)
+                        min_lateral_distance = min(min_lateral_distance, width / 2 + ego_width - abs(lateral_distance_rel_rotated))
+
+            # Stop action is initiated when there is a collision course with other actors
+            if collision or min_longitudinal_distance <  threshold_stopping_distance - ego_length / 2 - safety_margin or min_lateral_distance < 0:
+                speed_level = "STOP"
+            # Slow action is initiated if other actors are in safe range with respect to ego vehicle
+            elif min_longitudinal_distance <  threshold_slow_distance  - ego_length / 2 - safety_margin or min_lateral_distance < ego_width:
+                speed_level = "SLOW"
+                if abs(min_lateral_distance) > 0 and abs(min_lateral_distance - ego_width) > 0:
+                    speed_factor = (min_longitudinal_distance - ego_length / 2 - safety_margin) / (threshold_slow_distance - ego_length / 2 - safety_margin)
+                    speed_factor = min(max(0.0, speed_factor), 1.0)
+                    ego_forward_speed = slow_speed * speed_factor + ego_forward_speed * (1 - speed_factor)
+            # Move action is initiated when no obstacles are in the way
+            else:
+                speed_level = "MOVE"
+
+    # Step 7: Compute the angle between the ego vehicle orientation and the vector pointing to the target in world coordinates.
+    target_direction = ego_target_location - ego_location
+    target_direction_ego = np.dot(target_direction, ego_orientation), np.dot([-ego_orientation[1], ego_orientation[0]], target_direction)
+
+    # Step 8: Rotate the vector to the coordinate system of the ego vehicle and return the angle.
+    target_angle = np.arctan2(target_direction_ego[1], target_direction_ego[0]) * 180.0 / np.pi if np.linalg.norm(target_direction_ego) > 0 else 0.0
+    target_angle = ((target_angle + 180) % 360) - 180
+
+    return speed_level, target_angle

@@ -1,0 +1,160 @@
+import numpy as np
+from typing import Union
+
+def predict_speed_and_steering(scene_info: dict) -> tuple:
+    # Define constants and safe margins
+    LANE_WIDTH = 3.5
+    SAFE_MARGIN = 2.0
+    MAX_STOPPING_DISTANCE = 10.0
+    STOP_THRESHOLD = 3.0
+    CRITICAL_DISTANCE = 2.5
+    MAX_SPEED = 6.0
+
+    # Convert the coordinates of input objects to relative coordinates with respect to the ego vehicle
+    ego_location = scene_info["ego_location_world_coord"]
+    ego_target_location = scene_info["ego_target_location_world_coord"]
+    relative_target = ego_target_location - ego_location
+    ego_forward_speed = scene_info["ego_forward_speed"]
+    ego_length = scene_info["ego_length"]
+    ego_width = scene_info["ego_width"]
+    ego_orientation = np.arctan2(scene_info["ego_orientation_unit_vector"][1], scene_info["ego_orientation_unit_vector"][0])
+
+    obstacles = []
+
+    # Convert all vehicle inputs to relative coordinate formats
+    for vehicle_id, vehicle_data in scene_info["vehicles"].items():
+        vehicle_location = vehicle_data["location_world_coord"]
+        vehicle_orientation = np.arctan2(vehicle_data["orientation_unit_vector"][1], vehicle_data["orientation_unit_vector"][0])
+        vehicle_velocity = vehicle_data["forward_speed"] * np.array([np.cos(vehicle_orientation), np.sin(vehicle_orientation)])
+
+        rel_location = vehicle_location - ego_location
+        rel_location_rot = np.array([rel_location.dot([np.cos(ego_orientation), np.sin(ego_orientation)]), rel_location.dot([-np.sin(ego_orientation), np.cos(ego_orientation)])])
+
+        rel_velocity_rot = np.array([vehicle_velocity.dot([np.cos(ego_orientation), np.sin(ego_orientation)]), vehicle_velocity.dot([-np.sin(ego_orientation), np.cos(ego_orientation)])])
+
+        lateral_distance = abs(rel_location_rot[1]) - (ego_width / 2 + vehicle_data["sideways_width"] / 2)
+
+        # if the vehicle is in front of the ego vehicle, store it as an obstacle
+        if rel_location_rot[0] > -ego_length / 2 and lateral_distance < 2 * ego_width:
+        
+            obstacles.append({
+                "type": "vehicle",
+                "x": rel_location_rot[0] - vehicle_data["forward_length"] / 2,
+                "y": rel_location_rot[1],
+                "speed": np.linalg.norm(rel_velocity_rot),
+                "velocity": vehicle_velocity,
+                "length": vehicle_data["forward_length"],
+                "width": vehicle_data["sideways_width"],
+                "orientation": vehicle_orientation - ego_orientation,
+                "id": vehicle_id
+            })
+
+    # Convert all pedestrian inputs to relative coordinate formats.
+    # If pedestrian is in front of the ego vehicle, store it as an obstacle
+    for pedestrian_id, pedestrian_data in scene_info["pedestrians"].items():
+        pedestrian_location = pedestrian_data["location_world_coord"]
+        pedestrian_orientation = np.arctan2(pedestrian_data["orientation_unit_vector"][1], pedestrian_data["orientation_unit_vector"][0])
+        pedestrian_velocity = pedestrian_data["forward_speed"] * np.array([np.cos(pedestrian_orientation), np.sin(pedestrian_orientation)]) 
+
+        rel_location = pedestrian_location - ego_location
+        rel_location_rot = np.array([rel_location.dot([np.cos(ego_orientation), np.sin(ego_orientation)]), rel_location.dot([-np.sin(ego_orientation), np.cos(ego_orientation)])])
+
+        rel_velocity_rot = np.array([pedestrian_velocity.dot([np.cos(ego_orientation), np.sin(ego_orientation)]), pedestrian_velocity.dot([-np.sin(ego_orientation), np.cos(ego_orientation)])])
+
+        lateral_distance = abs(rel_location_rot[1]) - (ego_width / 2 + pedestrian_data["sideways_width"] / 2)
+        
+        if rel_location_rot[0] > -ego_length / 2 and lateral_distance < 2 * ego_width:
+            obstacles.append({
+                "type": "pedestrian",
+                "x": rel_location_rot[0] - pedestrian_data["forward_length"] / 2,
+                "y": rel_location_rot[1],
+                "speed": np.linalg.norm(rel_velocity_rot),
+                "velocity": pedestrian_velocity,
+                "length": pedestrian_data["forward_length"],
+                "width": pedestrian_data["sideways_width"],
+                "orientation": pedestrian_orientation - ego_orientation,
+                "id": pedestrian_id
+            })
+
+    # Calculate the target angle and the turn angle needed to reach the target location
+    target_angle = np.arctan2(relative_target[1], relative_target[0])
+    turn_angle = np.degrees(target_angle - ego_orientation)
+
+    if turn_angle < -180:
+        turn_angle += 360
+    elif turn_angle > 180:
+        turn_angle -= 360
+    
+    # Calculate the distance required to stop the vehicle
+    stopping_distance = (ego_forward_speed ** 2 / (2 * MAX_STOPPING_DISTANCE)) + SAFE_MARGIN
+    
+    # Check if the vehicle needs to stop or slow down due to any traffic lights or stop signs
+    if scene_info.get("distance_to_red_light") is not None:
+        if scene_info["distance_to_red_light"] < stopping_distance:
+            return "STOP", turn_angle
+
+    elif scene_info.get("distance_to_stop_sign") is not None:
+        if scene_info["distance_to_stop_sign"] < stopping_distance:
+            if ego_forward_speed < 0.1:
+                return "MOVE", turn_angle
+            else:
+                return "SLOW", turn_angle
+
+    closest_obstacle_distance = float("inf")
+    closest_obstacle = None
+
+    # Find the closest obstacle that is on a collision course with the ego vehicle
+    for obstacle in obstacles:
+        if obstacle["x"] > - ego_length / 2:
+            longitudinal_distance = obstacle["x"] - (ego_length / 2 + obstacle["length"] / 2 + CRITICAL_DISTANCE)
+            relative_velocity = ego_forward_speed - obstacle["speed"] * np.cos(obstacle["orientation"])
+            lateral_distance = abs(obstacle["y"]) - (ego_width / 2 + obstacle["width"] / 2)
+
+            if relative_velocity >= 0:
+                min_safe_distance = ((ego_forward_speed - relative_velocity) ** 2 / (2 * MAX_STOPPING_DISTANCE)) + ego_length / 2 + obstacle["length"] / 2 + max(ego_width, obstacle["width"]) / 2 + SAFE_MARGIN
+            else:
+                min_safe_distance = ego_length / 2 + obstacle["length"] / 2 + max(ego_width, obstacle["width"]) / 2 + SAFE_MARGIN
+
+            # Update the closest obstacle if it is closer than the closest obstacle seen so far and on a collision course with the ego vehicle
+            if lateral_distance < max(ego_width, obstacle["width"]) / 2 + SAFE_MARGIN and abs(longitudinal_distance) < min_safe_distance:
+                current_distance = np.sqrt(lateral_distance ** 2 + longitudinal_distance ** 2)
+                if current_distance < closest_obstacle_distance:
+                    closest_obstacle_distance = current_distance
+                    closest_obstacle = obstacle
+                if obstacle["type"] == "pedestrian" and current_distance < (ego_length / 2 + obstacle["length"] / 2 + SAFE_MARGIN) and closest_obstacle_distance < STOP_THRESHOLD:
+                    # Distances between pedestrian and ego vehicle is less than the vehicle length
+                    return "STOP", turn_angle
+                elif obstacle["type"] == "vehicle" and current_distance < (ego_length / 2 + obstacle["length"] / 2 + SAFE_MARGIN):
+                    velocity_angle = np.arctan2(obstacle["velocity"][1], obstacle["velocity"][0])
+                    angle_diff = abs(obstacle["orientation"] - velocity_angle)
+                    # If the obstacle is car
+                    if angle_diff > np.pi / 2:
+                        return "STOP",turn_angle
+                    # If the obstacle is in collision course at the current speed level to avoid collision
+                    elif closest_obstacle_distance < stopping_distance:
+                        if turn_angle == 0.0 or abs(turn_angle) > 75:
+                            return "STOP", turn_angle
+                        else:
+                            required_distance = min_safe_distance / abs(np.sin(np.radians(turn_angle)))
+                            if closest_obstacle_distance < required_distance:
+                                return "STOP", turn_angle
+                            else:
+                                return "SLOW", turn_angle
+                else:
+                    # If the distance of the obstacle is smaller than the stopping distance
+                    if closest_obstacle_distance < stopping_distance:
+                        if turn_angle == 0.0 or abs(turn_angle) > 75:
+                            return "STOP", turn_angle
+                        else:
+                            required_distance = min_safe_distance / abs(np.sin(np.radians(turn_angle)))
+                            if closest_obstacle_distance < required_distance:
+                                return "STOP", turn_angle
+                            else:
+                                return "SLOW", turn_angle
+                    else:
+                        # Else keep moving
+                        if ego_forward_speed >= MAX_SPEED - 2:
+                            return "SLOW", turn_angle
+
+    # Return MOVE by default if none of the conditions are satisfied
+    return "MOVE", turn_angle

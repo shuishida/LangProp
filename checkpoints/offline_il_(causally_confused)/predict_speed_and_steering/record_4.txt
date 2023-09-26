@@ -1,0 +1,267 @@
+import numpy as np
+from typing import Union
+
+def predict_speed_and_steering(scene_info: dict) -> tuple:
+    """
+    Given a dictionary of objects in the scene, returns either "MOVE", "SLOW", or "STOP" for the speed level, 
+    depending on how fast the vehicle should move, as well as the ego vehicle turn angle to reach the target location. 
+    
+    Return "STOP" if the agent needs to stop completely and immediately because there is a red traffic light, 
+    uncompleted stop signs, vehicles or pedestrians immediately in front of him.
+    Return "SLOW" if the agent doesn't need to stop immediately but should slow down either because there 
+    are vehicles or pedestrians in collision course if the vehicle kept moving, or if there is a red traffic light or 
+    uncompleted stop signs ahead that are affecting the vehicle.
+    Return "MOVE" if the agent doesn't need to stop or slow. The agent should be moving by default.
+    
+    Both the ego location and the target location are given in world coordinates. 
+    The turn angle should be returned in the ego vehicle frame (i.e. relative to the ego vehicle's orientation).
+
+    Args:
+        - scene_info: dict
+            Contains the following information:
+                {
+                    "ego_location_world_coord": np.ndarray,         # numpy array of shape (2,) which contains (x, y) of the center location of the ego vehicle in world coordinates given in [m]
+                    "ego_target_location_world_coord": np.ndarray,  # numpy array of shape (2,) which contains (x, y) of the target location of the ego vehicle in world coordinates given in [m]
+                    "ego_orientation_unit_vector": np.ndarray,      # numpy array of shape (2,) which contains (x, y) of unit vector orientation of the ego vehicle in world coordinates. The vehicle moves in the direction of the orientation.
+                    "ego_forward_speed": float,                     # the speed of the ego vehicle given in [m/s].
+                    "ego_length": float,                            # length of the ego vehicle in the orientation direction, given in [m/s].
+                    "ego_width": float,                             # width of the ego vehicle perpendicular to the orientation direction, given in [m].
+                    "distance_to_red_light": Union[float, None],    # distance to red light given in [m]. None if no traffic lights are affecting the ego vehicle
+                    "distance_to_stop_sign": Union[float, None],    # distance to stop sign given in [m]. None if no stop signs are affecting the ego vehicle
+                    "vehicles": {                       # dictionary of nearby vehicles
+                        <vehicle_id: int>:  {
+                            "location_world_coord": np.ndarray,     # numpy array of shape (2,) which contains (x, y) of the center location of vehicle <vehicle_id> in world coordinates given in [m]
+                            "orientation_unit_vector": np.ndarray,  # numpy array of shape (2,) which contains (x, y) of unit vector orientation of vehicle <vehicle_id> in world coordinates. The vehicle moves in the direction of the orientation.
+                            "forward_speed": float,                 # speed of vehicle <vehicle_id> given in [m/s].
+                            "forward_length": float,                # length of the vehicle <vehicle_id> along the orientation direction, given in [m].
+                            "sideways_width": float,                # width of the vehicle <vehicle_id> perpendicular to the orientation direction, given in [m].
+                        },
+                    },
+                    "pedestrians": {                    # dictionary of nearby pedestrians
+                        <pedestrian_id: int>:  {
+                            "location_world_coord": np.ndarray,     # numpy array of shape (2,) which contains (x, y) of the center location of pedestrian <pedestrian_id> in world coordinates given in [m]
+                            "orientation_unit_vector": np.ndarray,  # numpy array of shape (2,) which contains (x, y) of unit vector orientation of pedestrian <pedestrian_id> in world coordinates. The vehicle moves in the direction of the orientation.
+                            "forward_speed": float,                 # speed of pedestrian <pedestrian_id> relative to the orientation given in [m/s].
+                            "forward_length": float,                # length of the pedestrian <pedestrian_id> along the orientation direction, given in [m].
+                            "sideways_width": float,                # width of the pedestrian <pedestrian_id> perpendicular to the orientation direction, given in [m].
+                        },
+                    }
+                }
+
+    Returns:
+        - speed_level: str          # Choose from ("MOVE", "SLOW", "STOP").
+        - turn_angle: float         # Predicted turn angle of the ego vehicle to reach the target waypoint in [degrees]. The range should be between -180 to 180 degrees
+    """
+    # Constants used in the function
+    SAFE_WIDTH_MARGIN = 0.5 
+    MIN_SLOW_MARGIN = 1.5
+    SLOW_MARGIN = 3.0
+    STOP_MARGIN = 2 
+    ACCELERATION = 3 
+    MAX_SPEED = 6
+    STOP_THRESHOLD_SPEED = 0.1
+
+    # Convert all coordinates into relative ego vehicle coordinate system
+    ego_loc = np.array(scene_info["ego_location_world_coord"])
+    ego_tgt = np.array(scene_info["ego_target_location_world_coord"])
+    ego_vec = np.array(scene_info["ego_orientation_unit_vector"])
+    ego_speed = scene_info["ego_forward_speed"]
+    ego_len = scene_info["ego_length"]
+    ego_wid = scene_info["ego_width"]
+ 
+
+    def to_relative_coor(point):
+        relative_point = point - ego_loc
+        yaw = np.arctan2(ego_vec[1], ego_vec[0])
+        rotation_matrix = np.array([[np.cos(yaw), -np.sin(yaw)], [np.sin(yaw), np.cos(yaw)]])
+        relative_point = np.dot(rotation_matrix, relative_point)
+        return relative_point
+ 
+    rel_vehicles, rel_pedestrians = [], []
+    for vehicle_id, vehicle in scene_info["vehicles"].items():
+        if vehicle["forward_speed"] <= 0 and vehicle_id != 0:
+            continue   # skip stationary vehicles except the ego vehicle
+        veh_loc = to_relative_coor(np.array(vehicle["location_world_coord"]))
+        veh_vec = np.array(vehicle["orientation_unit_vector"])
+        veh_speed = vehicle["forward_speed"]
+        veh_speed_rel = (
+            veh_speed * np.cos(
+                np.arctan2(veh_vec[1], veh_vec[0]) - np.arctan2(ego_vec[1], ego_vec[0])
+            ) - ego_speed
+        )
+        veh_len = vehicle["forward_length"]
+        veh_wid = vehicle["sideways_width"]
+ 
+        # Calculate the distance from the vehicle to the ego vehicle.
+        distance_rel = veh_loc[0]
+        if distance_rel > ego_len or distance_rel < 0:
+            continue
+ 
+        stopping_distance_vehicle = np.max([
+                veh_speed_rel**2 / (2*ACCELERATION) 
+                + ego_wid/2 
+                + STOP_MARGIN 
+                + veh_wid/2 
+                + veh_len/2, 
+                STOP_THRESHOLD_SPEED*veh_speed_rel 
+                + ego_wid/2 
+                + STOP_MARGIN 
+                + veh_wid/2]
+            )
+
+        stopping_time_vehicle = np.max([
+            veh_speed_rel / ACCELERATION, 
+            STOP_THRESHOLD_SPEED
+        ])
+
+        # Perform a detailed check for the relative distance between the ego vehicle and the other vehicle.
+        if abs(veh_loc[1]) > (ego_wid + veh_wid) / 2 + SAFE_WIDTH_MARGIN:
+            continue
+        angle_vehicle = np.arctan2(veh_loc[1], distance_rel)
+        if abs(angle_vehicle) > np.pi / 2:
+            continue
+
+        rel_vehicles.append(
+            {
+                "yaw": angle_vehicle,
+                "distance_to_obstacle": distance_rel,
+                "stopping_distance": stopping_distance_vehicle,
+                "stopping_time": stopping_time_vehicle,
+                "speed_rel": veh_speed_rel
+            }
+        )
+
+    for ped_id, pedestrian in scene_info["pedestrians"].items():
+        if pedestrian["forward_speed"] <= 0:
+            continue  # skip stationary pedestrians
+        ped_loc = to_relative_coor(np.array(pedestrian["location_world_coord"]))
+        ped_speed = pedestrian["forward_speed"]
+        ped_speed_rel = (
+            ped_speed * np.cos(
+                np.arctan2(pedestrian["orientation_unit_vector"][1], pedestrian["orientation_unit_vector"][0])
+                - np.arctan2(ego_vec[1], ego_vec[0])
+            )
+            - ego_speed
+        )
+        ped_length = pedestrian["forward_length"]
+        ped_width = pedestrian["sideways_width"]
+        
+        # Calculate the distance from the pedestrian to the ego vehicle
+        distance_rel = ped_loc[0]
+        if distance_rel > ego_len or distance_rel < 0:
+            continue
+ 
+        stopping_distance_pedestrian = max([
+                ped_speed_rel**2 / (2*ACCELERATION) 
+                + ego_wid/2 
+                + ped_width/2 
+                + STOP_MARGIN 
+                + ped_length/2, 
+                STOP_THRESHOLD_SPEED*ped_speed_rel 
+                + ego_wid/2 
+                + STOP_MARGIN 
+                + ped_width/2]
+            )
+
+        stopping_time_pedestrian = np.max([
+            ped_speed_rel / ACCELERATION, 
+            STOP_THRESHOLD_SPEED
+        ])
+             
+        # Perform a detailed check for the relative distance between the ego vehicle and the pedestrian.
+        if abs(ped_loc[1]) > (ego_wid + ped_width) / 2 + SAFE_WIDTH_MARGIN:
+            continue
+         
+        angle_pedestrian = np.arctan2(ped_loc[1], distance_rel + 1e-5)
+        if abs(angle_pedestrian) > np.pi / 2:
+            continue
+
+        # Check if the pedestrian is moving in the opposite direction of the ego vehicle.
+        ped_speed_diff = ped_speed_rel
+        if ped_speed_diff < 0:
+            continue
+         
+        # If the pedestrian is in the same lane as the ego vehicle and is on a collision course with the ego vehicle.
+        if distance_rel <= ego_wid + 0.5*ped_width:
+            rel_pedestrians.append(
+                {
+                    "yaw": angle_pedestrian,
+                    "distance_to_obstacle": distance_rel,
+                    "stopping_distance": stopping_distance_pedestrian,
+                    "stopping_time": stopping_time_pedestrian,
+                    "speed_rel": ped_speed_rel
+                }
+            )
+
+    # Calculate the stopping distance and time of the ego vehicle.
+    stopping_distance_ego = np.max([
+        ego_speed**2 / (2*ACCELERATION) 
+        + ego_wid/2 
+        + STOP_MARGIN 
+        + ego_len/2, 
+        STOP_THRESHOLD_SPEED*ego_speed 
+        + ego_wid/2 
+        + STOP_MARGIN]
+    )
+
+    stopping_time_ego = np.max([
+            ego_speed / ACCELERATION, 
+            STOP_THRESHOLD_SPEED]
+        )
+ 
+    # Set the default speed level to be "MOVE".
+    speed_level = "MOVE"
+
+    # Check if the ego vehicle is already at its destination or stopped, stop.
+    if np.linalg.norm(ego_tgt - ego_loc) == 0 or ego_speed < 1e-3:
+        speed_level = "STOP"
+    else:
+        # Check for obstacles in front of the ego vehicle.
+        obstacles_in_way = sorted(rel_vehicles + rel_pedestrians, key=lambda x: x['distance_to_obstacle'])
+
+        for obstacle in obstacles_in_way:
+            if obstacle['distance_to_obstacle'] <= 0:
+                continue  # skip obstacles behind the ego vehicle
+            
+            if obstacle['speed_rel'] < 0:
+                continue  # skip obstacles that are moving away
+            
+            if obstacle['stopping_distance'] <= stopping_distance_ego and obstacle['stopping_time'] <= stopping_time_ego:
+                speed_level = "STOP"
+                break
+            elif obstacle['stopping_time'] <= MIN_SLOW_MARGIN and obstacle['distance_to_obstacle'] <= MAX_SPEED*SLOW_MARGIN:
+                speed_level = "SLOW"
+                break
+            
+        # Check if there is a stop sign or red traffic light.
+        if speed_level == "MOVE":
+            if scene_info["distance_to_red_light"] != None and scene_info["distance_to_red_light"] >= 0:
+                if scene_info["distance_to_red_light"] <= stopping_distance_ego + STOP_MARGIN + ego_len:
+                    if ego_speed > STOP_THRESHOLD_SPEED:
+                        speed_level = "SLOW"
+                    elif ego_speed <= STOP_THRESHOLD_SPEED:
+                        speed_level = "STOP"
+            elif scene_info["distance_to_stop_sign"] != None and scene_info["distance_to_stop_sign"] >= 0:
+                if scene_info["distance_to_stop_sign"] <= stopping_distance_ego + STOP_MARGIN + ego_len:
+                    if ego_speed > STOP_THRESHOLD_SPEED:
+                        speed_level = "SLOW"
+                    elif ego_speed <= STOP_THRESHOLD_SPEED:
+                        speed_level = "STOP"
+           
+    # Compute the target direction vector and then determine the angle to the target.
+    target_dir_vec = ego_tgt - ego_loc
+
+    if np.linalg.norm(target_dir_vec) == 0:
+        return speed_level, 0
+
+    target_dir_vec_ego_frame = np.array(
+        [np.dot(target_dir_vec, ego_vec), np.dot(target_dir_vec, np.array([-ego_vec[1], ego_vec[0]]))]
+    )
+    turn_angle = np.arctan2(target_dir_vec_ego_frame[1], target_dir_vec_ego_frame[0]) * 180 / np.pi
+
+    if turn_angle > 180:
+        turn_angle -= 360
+    elif turn_angle < -180:
+        turn_angle += 360
+
+    return speed_level, turn_angle

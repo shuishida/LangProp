@@ -1,0 +1,151 @@
+import numpy as np
+from typing import List, Tuple, Union, Dict
+
+# Define constants
+stopping_time_margin = 2.0
+reaction_time = 0.5
+stopping_speed = 0.1
+slow_speed = 2.5
+safety_margin = 2.0
+
+
+def predict_speed_and_steering(scene_info: Dict) -> Tuple[str, float]:
+    """
+    Given the state of the scene, find the required speed level and turn angle of the ego vehicle.
+
+    Args:
+        scene_info (dict): Contains information about the scene.
+
+    Returns:
+        (str, float): A tuple containing the required speed level and turn angle of the ego vehicle.
+                      The speed level can be "MOVE", "SLOW", or "STOP". The turn angle should be a float between -180 to 180 degrees.
+    """
+
+    # Step 1: Convert coordinates to relative coordinates and find the distance to target
+    ego_location = np.array(scene_info['ego_location_world_coord'])
+    ego_target_location = np.array(scene_info['ego_target_location_world_coord'])
+    ego_orientation = np.array(scene_info['ego_orientation_unit_vector'])
+    ego_forward_speed = scene_info['ego_forward_speed']
+    ego_width = scene_info['ego_width']
+    ego_length = scene_info['ego_length']
+    objects = scene_info['vehicles']
+    pedestrians = scene_info['pedestrians']
+
+    objects_relative = {}
+    for obj_id, obj_info in objects.items():
+        obj_location = np.array(obj_info['location_world_coord']) - ego_location
+        obj_orientation = np.array(obj_info['orientation_unit_vector'])
+        obj_speed = obj_info['forward_speed']
+        obj_length = obj_info['forward_length'] + ego_length
+        obj_width = obj_info['sideways_width'] + ego_width
+
+        obj_location_rel = np.dot(obj_location, ego_orientation), np.dot([-ego_orientation[1], ego_orientation[0]], obj_location)
+        if obj_location_rel[0] > 0:
+            obj_location_rel_rotated = (obj_location_rel[0], np.abs(obj_location_rel[1]))
+            objects_relative[obj_id] = {'location_rel': obj_location_rel_rotated, 'speed': obj_speed, 'length': obj_length, 'width': obj_width}
+
+    pedestrians_relative = {}
+    for ped_id, ped_info in pedestrians.items():
+        ped_location = np.array(ped_info['location_world_coord']) - ego_location
+        ped_orientation = np.array(ped_info['orientation_unit_vector'])
+        ped_speed = ped_info['forward_speed']
+        ped_length = ped_info['forward_length'] + ego_length
+        ped_width = ped_info['sideways_width'] + ego_width
+
+        ped_location_rel = np.dot(ped_location, ego_orientation), np.dot([-ego_orientation[1], ego_orientation[0]], ped_location)
+        if ped_location_rel[0] > 0:
+            ped_location_rel_rotated = (ped_location_rel[0], ped_location_rel[1])
+            pedestrians_relative[ped_id] = {'location_rel': ped_location_rel_rotated, 'speed': ped_speed, 'length': ped_length, 'width': ped_width}
+
+    distance_to_target = np.linalg.norm(ego_location - ego_target_location)
+    if distance_to_target < stopping_speed:
+        return "STOP", 0.0
+
+    # Step 2: Determine minimum stopping and slow distances required
+    stopping_distance = stopping_speed ** 2 / (2 * 0.4) + safety_margin + ego_length / 2
+    slow_distance = slow_speed * stopping_time_margin + safety_margin + ego_length / 2
+
+    # Step 3: Stop at stop sign or red light
+    if scene_info['distance_to_stop_sign'] is not None and scene_info['distance_to_stop_sign'] < stopping_distance:
+        if ego_forward_speed <= stopping_speed:
+            speed_level = "MOVE"
+        else:
+            stopping_speed_current = max(scene_info['distance_to_stop_sign'] / 2, stopping_speed)
+            if ego_forward_speed > stopping_speed_current:
+                ego_forward_speed = stopping_speed_current
+                speed_level = "STOP"
+            else:
+                speed_level = "MOVE"
+
+    elif scene_info['distance_to_red_light'] is not None and scene_info['distance_to_red_light'] < stopping_distance:
+        speed_level = "STOP"
+
+    else:
+        # Step 4: Avoid collisions with pedestrians and vehicles
+        collision = False
+        min_longitudinal_distance = float('inf')
+        min_lateral_distance = float('inf')
+        for ped_id, ped_info in pedestrians_relative.items():
+            ped_location_rel_rotated = ped_info['location_rel']
+            ped_speed = ped_info['speed']
+            ped_length = ped_info['length']
+            ped_width = ped_info['width']
+
+            ped_location_rel = np.array([ped_location_rel_rotated[0], np.sign(ped_location_rel_rotated[1]) * (ped_width / 2 + ego_width)])
+
+            ped_longitudinal_distance = ped_location_rel_rotated[0] - ped_length / 2 - ego_length / 2
+            
+            # check if there is a collision course with the actor
+            if np.abs(ped_location_rel_rotated[1]) <= ped_width / 2 + ego_width:
+                if ped_longitudinal_distance <= stopping_distance:
+                    collision = True
+                elif ped_longitudinal_distance < slow_distance and np.abs(ped_location_rel_rotated[1]) <= ped_width / 2 + ego_width:
+                    min_longitudinal_distance = min(
+                        ped_longitudinal_distance - ego_length / 2 - safety_margin,
+                        min_longitudinal_distance)
+                    min_lateral_distance = np.minimum(
+                        ped_width / 2 + ego_width - np.abs(ped_location_rel_rotated[1]),
+                        min_lateral_distance)
+
+        for obj_id, obj_info in objects_relative.items():
+            obj_location_rel_rotated = obj_info['location_rel']
+            obj_speed = obj_info['speed']
+            obj_length = obj_info['length']
+            obj_width = obj_info['width']
+
+            obj_location_rel = np.array([obj_location_rel_rotated[0], np.sign(obj_location_rel_rotated[1]) * (obj_width / 2 + ego_width)])
+
+            obj_longitudinal_distance = obj_location_rel_rotated[0] - obj_length / 2 - ego_length / 2
+
+            # check if there is a collision course with the actor
+            if np.abs(obj_location_rel_rotated[1]) <= obj_width / 2 + ego_width:
+                if obj_longitudinal_distance <= stopping_distance:
+                    collision_speed = min(ego_forward_speed, obj_speed)
+                    if obj_longitudinal_distance - (obj_length + ego_length) / 2 <= collision_speed ** 2 / (2 * (stopping_distance - ego_length / 2 - safety_margin)):
+                        collision = True
+                elif obj_longitudinal_distance < slow_distance and np.abs(obj_location_rel_rotated[1]) <= obj_width / 2 + ego_width:
+                    if np.abs(obj_speed - ego_forward_speed) < 0.5 and obj_speed < ego_forward_speed:
+                        continue
+                    min_longitudinal_distance = min(
+                        obj_longitudinal_distance - ego_length / 2 - safety_margin,
+                        min_longitudinal_distance)
+
+        if collision or min_longitudinal_distance < stopping_distance - ego_width / 2 - safety_margin or min_lateral_distance < 0:
+            speed_level = "STOP"
+        elif min_longitudinal_distance < slow_distance - ego_width / 2 - safety_margin or min_lateral_distance < ego_width:
+            speed_level = "SLOW"
+            if np.all([min_lateral_distance <= 0]):
+                speed_factor = (min_longitudinal_distance - ego_length / 2 - safety_margin) / (slow_distance - ego_length / 2 - safety_margin)
+                speed_factor = min(max(0.0, speed_factor), 1.0)
+                ego_forward_speed = slow_speed * speed_factor + ego_forward_speed * (1 - speed_factor)
+        else:
+            speed_level = "MOVE"
+
+    # Step 5: Find the turn angle required to reach the target location.
+    target_dir = ego_target_location - ego_location
+    target_dir_ego = np.dot(target_dir, ego_orientation), np.dot([-ego_orientation[1], ego_orientation[0]], target_dir)
+    turn_angle = np.arctan2(target_dir_ego[1], target_dir_ego[0]) * 180.0 / np.pi if np.linalg.norm(target_dir_ego) > 0 else 0.0
+    turn_angle = ((turn_angle + 180) % 360) - 180
+
+    return speed_level, turn_angle
+

@@ -1,0 +1,222 @@
+{
+    "name": "predict_speed_and_steering",
+    "step": 5000,
+    "records": {
+        "0": {
+            "main": {
+                "priority": 0.7450000000000008,
+                "past_priority": 0.7592407592407594,
+                "past_weight": 0.0,
+                "count": 1000,
+                "avg_score": 0.7450000000000008
+            }
+        },
+        "1": {
+            "main": {
+                "priority": 0.7450000000000008,
+                "past_priority": 0.7592407592407594,
+                "past_weight": 0.0,
+                "count": 1000,
+                "avg_score": 0.7450000000000008
+            }
+        },
+        "2": {
+            "main": {
+                "priority": 0.7370000000000012,
+                "past_priority": 0.7342657342657356,
+                "past_weight": 0.0,
+                "count": 1000,
+                "avg_score": 0.7370000000000012
+            }
+        },
+        "3": {
+            "main": {
+                "priority": 0.7370000000000009,
+                "past_priority": 0.7492507492507497,
+                "past_weight": 0.0,
+                "count": 1000,
+                "avg_score": 0.7370000000000009
+            }
+        },
+        "4": {
+            "main": {
+                "priority": 0.7360000000000008,
+                "past_priority": 0.7492507492507497,
+                "past_weight": 0.0,
+                "count": 1000,
+                "avg_score": 0.7360000000000008
+            }
+        },
+        "5": {
+            "main": {
+                "priority": 0.7359999999999998,
+                "past_priority": 0.7112887112887113,
+                "past_weight": 0.0,
+                "count": 1000,
+                "avg_score": 0.7359999999999998
+            }
+        },
+        "6": {
+            "main": {
+                "priority": 0.7359999999999998,
+                "past_priority": 0.7112887112887113,
+                "past_weight": 0.0,
+                "count": 1000,
+                "avg_score": 0.7359999999999998
+            }
+        },
+        "7": {
+            "main": {
+                "priority": 0.7359999999999998,
+                "past_priority": 0.7102897102897101,
+                "past_weight": 0.0,
+                "count": 1000,
+                "avg_score": 0.7359999999999998
+            }
+        },
+        "8": {
+            "main": {
+                "priority": 0.7350000000000012,
+                "past_priority": 0.7112887112887113,
+                "past_weight": 0.0,
+                "count": 1000,
+                "avg_score": 0.7350000000000012
+            }
+        },
+        "9": {
+            "main": {
+                "priority": 0.7350000000000012,
+                "past_priority": 0.7092907092907093,
+                "past_weight": 0.0,
+                "count": 1000,
+                "avg_score": 0.7350000000000012
+            }
+        },
+        "10": {
+            "main": {
+                "priority": 0.7350000000000012,
+                "past_priority": 0.7082917082917081,
+                "past_weight": 0.0,
+                "count": 1000,
+                "avg_score": 0.7350000000000012
+            }
+        },
+        "11": {
+            "main": {
+                "priority": 0.7279999999999994,
+                "past_priority": 0.6923076923076918,
+                "past_weight": 0.0,
+                "count": 1000,
+                "avg_score": 0.7279999999999994
+            }
+        },
+        "12": {
+            "main": {
+                "priority": 0.7240000000000003,
+                "past_priority": 0.7302697302697315,
+                "past_weight": 0.0,
+                "count": 1000,
+                "avg_score": 0.7240000000000003
+            }
+        },
+        "13": {
+            "main": {
+                "priority": 0.7239999999999994,
+                "past_priority": 0.7412587412587415,
+                "past_weight": 0.0,
+                "count": 1000,
+                "avg_score": 0.7239999999999994
+            }
+        },
+        "14": {
+            "main": {
+                "priority": 0.7219999999999993,
+                "past_priority": 0.74025974025974,
+                "past_weight": 0.0,
+                "count": 1000,
+                "avg_score": 0.7219999999999993
+            }
+        },
+        "15": {
+            "main": {
+                "priority": 0.7219999999999993,
+                "past_priority": 0.74025974025974,
+                "past_weight": 0.0,
+                "count": 1000,
+                "avg_score": 0.7219999999999993
+            }
+        },
+        "16": {
+            "main": {
+                "priority": 0.7219999999999993,
+                "past_priority": 0.74025974025974,
+                "past_weight": 0.0,
+                "count": 1000,
+                "avg_score": 0.7219999999999993
+            }
+        },
+        "17": {
+            "main": {
+                "priority": 0.7219999999999993,
+                "past_priority": 0.74025974025974,
+                "past_weight": 0.0,
+                "count": 1000,
+                "avg_score": 0.7219999999999993
+            }
+        },
+        "18": {
+            "main": {
+                "priority": 0.7219999999999993,
+                "past_priority": 0.74025974025974,
+                "past_weight": 0.0,
+                "count": 1000,
+                "avg_score": 0.7219999999999993
+            }
+        },
+        "19": {
+            "main": {
+                "priority": 0.7219999999999993,
+                "past_priority": 0.74025974025974,
+                "past_weight": 0.0,
+                "count": 1000,
+                "avg_score": 0.7219999999999993
+            }
+        },
+        "20": {
+            "main": {
+                "priority": 0.6280000000000009,
+                "past_priority": 0,
+                "past_weight": 0,
+                "count": 1000,
+                "avg_score": 0.6280000000000009
+            }
+        },
+        "21": {
+            "main": {
+                "priority": 0.3760000000000001,
+                "past_priority": 0,
+                "past_weight": 0,
+                "count": 1000,
+                "avg_score": 0.3760000000000001
+            }
+        },
+        "22": {
+            "main": {
+                "priority": -7.959999999999995,
+                "past_priority": 0,
+                "past_weight": 0,
+                "count": 1000,
+                "avg_score": -7.959999999999995
+            }
+        },
+        "23": {
+            "main": {
+                "priority": -10.0,
+                "past_priority": 0,
+                "past_weight": 0,
+                "count": 1000,
+                "avg_score": -10.0
+            }
+        }
+    }
+}

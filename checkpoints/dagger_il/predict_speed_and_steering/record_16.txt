@@ -1,0 +1,182 @@
+import numpy as np
+from typing import Union
+
+
+# Constants
+EGO_VEHICLE_SPEED_LIMIT = 6.0           # [m/s]
+EGO_VEHICLE_SPEED_THRESHOLD = 0.1       # [m/s]
+SAFETY_TIME_MARGIN = 2.0                # [s]
+SAFETY_DISTANCE_MARGIN = 2.0            # [m]
+
+
+def get_relative_coordinates(scene_info: dict) -> dict:
+    """
+    Converts the absolute world coordinates of actors in the scene to relative coordinates with respect to the ego vehicle.
+
+    Args:
+        scene_info (dict): A dictionary containing information about the scene.
+
+    Returns:
+        dict: A dictionary containing the relative position, orientation, speed, length, and width of the actors in the scene with respect to the ego vehicle.
+    """
+    ego_location = scene_info["ego_location_world_coord"]
+    ego_orientation = scene_info["ego_orientation_unit_vector"]
+    ego_forward = np.array([ego_orientation[0], ego_orientation[1]])
+    ego_length = scene_info["ego_length"]
+    ego_width = scene_info["ego_width"]
+    actors = {}
+
+    # Convert the absolute world coordinates to relative coordinates for all actors
+    for actor_id, actor in {**scene_info["vehicles"], **scene_info["pedestrians"]}.items():
+        actor_location = actor["location_world_coord"]
+        relative_location = actor_location - ego_location
+        actor_orientation = actor["orientation_unit_vector"]
+        relative_orientation = np.dot(actor_orientation, np.array([ego_forward, np.array([-ego_forward[1], ego_forward[0]])]).T)
+        actors[actor_id] = {"location": relative_location, "orientation": relative_orientation,
+                            "speed": actor["forward_speed"], "length": actor["forward_length"], "width": actor["sideways_width"]}
+
+    # Calculate the relative target location and turn angle
+    target_location = scene_info["ego_target_location_world_coord"]
+    relative_target_location = target_location - ego_location
+    target_heading = np.arctan2(relative_target_location[1], relative_target_location[0])
+    current_heading = np.arctan2(ego_forward[1], ego_forward[0])
+    heading_diff = (target_heading - current_heading + np.pi) % (2 * np.pi) - np.pi
+    turn_angle = np.rad2deg(heading_diff)
+
+    # Return the relative coordinates of all actors, ego vehicle forward direction, ego vehicle length, width, and turn angle
+    relative_coordinates = {'actors': actors,
+                            'ego_forward': ego_forward,
+                            'ego_length': ego_length,
+                            'ego_width': ego_width,
+                            'turn_angle': turn_angle}
+    return relative_coordinates
+
+
+def calculate_distance_to_collision(safety_margin: float, actor: dict, ego_forward: np.ndarray, ego_length: float, ego_width: float) -> float:
+    """
+    Calculates the closest distance (in meters) to collision between an actor and the ego vehicle.
+
+    Args:
+        safety_margin (float): A safety margin to add in meters.
+        actor (dict): A dictionary containing information about an actor which includes its location, orientation, speed, length, and width.
+        ego_forward (ndarray): A numpy array of shape (2,) which contains (x, y) of unit vector orientation of the ego vehicle in world coordinates.
+        ego_length (float): Length of the ego vehicle in the forward direction, given in [m].
+        ego_width (float): Width of the ego vehicle perpendicular to the forward direction, given in [m].
+
+    Returns:
+        float: The closest distance (in meters) to collision between the actor and the ego vehicle.
+    """
+    actor_location = actor['location']
+    actor_orientation = actor['orientation']
+    actor_speed = actor['speed']
+    actor_length = actor['length']
+    actor_width = actor['width']
+
+    forward_distance = np.dot(actor_location, ego_forward)
+    lateral_distance = np.dot(actor_location, np.array([-ego_forward[1], ego_forward[0]]))
+
+    # If the actor is not in the collision course, we can safely neglect it
+    if forward_distance <= 0 or np.abs(lateral_distance) > (actor_width + ego_width) / 2 or actor_length > np.sqrt(forward_distance ** 2 + lateral_distance ** 2 + ego_width ** 2) + ego_length / 2:
+        return float('inf')
+
+    projected_speed = np.dot(actor_speed * actor_orientation, ego_forward)
+    collision_distance = np.sqrt(forward_distance ** 2 + lateral_distance ** 2 + ego_width ** 2) - (actor_length / 2 + ego_length / 2 + safety_margin)
+
+    return collision_distance
+
+
+def predict_speed_and_steering(scene_info: dict) -> (str, float):
+    """
+    Given a dictionary of objects in the scene, returns either "MOVE", "SLOW", or "STOP" for the speed level,
+    depending on how fast the vehicle should move, as well as the ego vehicle turn angle to reach the target location.
+    Return "STOP" if the agent needs to stop completely and immediately because there is a red traffic light,
+    vehicles or pedestrians immediately in front of the vehicle so that the vehicle cannot move without collisions.
+    Return "SLOW" if the agent doesn't need to stop immediately but should slow down either because there are
+    vehicles or pedestrians in collision course if the vehicle kept moving, or if there is a red traffic light
+    or uncompleted stop signs ahead that are affecting the vehicle.
+    Return "MOVE" if the agent doesn't need to stop or slow. The agent should be moving by default.
+    The turn angle should be returned in the ego vehicle frame (i.e. relative to the ego vehicle's forward direction).
+
+    Args:
+        scene_info (dict): A dictionary containing information about the scene.
+
+    Returns:
+        tuple: A tuple containing the predicted speed level ("MOVE", "SLOW", "STOP") and the turn angle in degrees.
+    """
+    # Get the relevant information
+    relative_coordinates = get_relative_coordinates(scene_info)
+    ego_forward = relative_coordinates['ego_forward']
+    ego_length = relative_coordinates['ego_length']
+    ego_width = relative_coordinates['ego_width']
+    turn_angle = relative_coordinates['turn_angle']
+    actors = relative_coordinates['actors']
+
+    # Check if the ego vehicle is already at the target location
+    if np.linalg.norm(scene_info['ego_location_world_coord'] - scene_info['ego_target_location_world_coord']) == 0:
+        speed_level = "STOP"
+        ego_vel = 0.0
+    else:
+        # Calculate the closest distance to collision for each actor
+        closest_collision_distance = float('inf')
+        is_actor_within_safety_margin = False
+        for actor_id, actor in actors.items():
+            collision_distance = calculate_distance_to_collision(SAFETY_DISTANCE_MARGIN, actor, ego_forward, ego_length, ego_width)
+            if collision_distance < closest_collision_distance:
+                closest_collision_distance = collision_distance
+                closest_collision_id = actor_id
+                is_actor_within_safety_margin = closest_collision_distance <= scene_info["ego_forward_speed"] * SAFETY_TIME_MARGIN + ego_width / 2 + SAFETY_DISTANCE_MARGIN
+
+        # Determine whether to STOP or SLOW
+        if is_actor_within_safety_margin:
+            # There is a vehicle or pedestrian in collision course
+            collision_distance = closest_collision_distance - ego_width / 2 - SAFETY_DISTANCE_MARGIN - actors[closest_collision_id]["width"] / 2
+            if collision_distance <= 0:
+                speed_level = "STOP"
+            elif collision_distance <= max(scene_info["ego_forward_speed"] ** 2 / (2 * SAFETY_DISTANCE_MARGIN), SAFETY_TIME_MARGIN * scene_info["ego_forward_speed"]):
+                speed_level = "SLOW"
+            elif (np.abs(turn_angle) > 45 and closest_collision_distance < 50) or (scene_info.get("distance_to_red_light", None) is not None and scene_info["distance_to_red_light"] <= (SAFETY_TIME_MARGIN * scene_info["ego_forward_speed"] + SAFETY_DISTANCE_MARGIN)):
+                speed_level = "STOP"
+            else:
+                speed_level = "SLOW"
+        else:
+            # No actors are within the safety margin
+            if scene_info.get("distance_to_red_light", None) is not None and scene_info["distance_to_red_light"] <= (SAFETY_TIME_MARGIN * scene_info["ego_forward_speed"] + SAFETY_DISTANCE_MARGIN):
+                if scene_info["ego_forward_speed"] <= EGO_VEHICLE_SPEED_THRESHOLD or (scene_info["distance_to_stop_sign"] is not None and scene_info["distance_to_stop_sign"] <= 0):
+                    speed_level = "STOP"
+                elif (np.abs(turn_angle) > 45 and scene_info["distance_to_red_light"] <= 15) or (scene_info["distance_to_stop_sign"] is not None and scene_info["distance_to_stop_sign"] <= (SAFETY_TIME_MARGIN * scene_info["ego_forward_speed"] + SAFETY_DISTANCE_MARGIN)):
+                    stop_distance = scene_info["distance_to_stop_sign"] - SAFETY_DISTANCE_MARGIN
+                    time_to_stop_sign = stop_distance / scene_info["ego_forward_speed"]
+                    if stop_distance <= 0 or time_to_stop_sign <= 0:
+                        speed_level = "STOP"
+                    elif stop_distance <= SAFETY_TIME_MARGIN * scene_info["ego_forward_speed"] / 2:
+                        speed_level = "SLOW"
+                    else:
+                        adjusted_speed = max(scene_info["ego_forward_speed"] * (stop_distance - SAFETY_DISTANCE_MARGIN) / stop_distance, 0.1)
+                        if adjusted_speed <= 0.1:
+                            speed_level = "STOP"
+                        elif adjusted_speed < scene_info["ego_forward_speed"]:
+                            speed_level = "SLOW"
+                        else:
+                            speed_level = "MOVE"
+                else:
+                    speed_level = "SLOW" if scene_info["ego_forward_speed"] > EGO_VEHICLE_SPEED_THRESHOLD else "STOP"
+            else:
+                speed_level = "MOVE"
+
+        # Update the speed of the ego vehicle
+        if speed_level == "MOVE":
+            ego_vel = min(scene_info["ego_forward_speed"] + 1.0, EGO_VEHICLE_SPEED_LIMIT)
+        elif speed_level == "SLOW":
+            if scene_info["ego_forward_speed"] <= EGO_VEHICLE_SPEED_THRESHOLD:
+                ego_vel = 0.0
+            else:
+                ego_vel = max(scene_info["ego_forward_speed"] - 1.0, 0.0)
+        elif speed_level == "STOP":
+            ego_vel = 0.0
+
+    # Calculate the new position of the ego vehicle and the turn angle in degrees
+    ego_pos = scene_info['ego_location_world_coord']
+    ego_pos += ego_forward * ego_vel * 0.1
+
+    # Return the predicted speed level and turn angle
+    return speed_level, turn_angle

@@ -1,0 +1,162 @@
+%% SYSTEM
+You are a talented AI researcher who is highly competent of solving challenging tasks.
+You are a prominent computer scientist and researcher known for your significant contributions to the fields of artificial intelligence and deep learning.
+You are currently the Director of AI and Autopilot Vision, where you lead the development of advanced neural networks for self-driving cars.
+You have many years of experiences in programming and you can solve any problem.
+
+%% USER
+We are developing code for a self-driving car. We need to produce a function that takes the scene information and predicts a valid target speed level and turn angle for the vehicle.
+I want you to help me write code that decides between moving, slowing, stopping, as well as the turn angle so that it can perfectly drives the vehicle.
+
+Here is the definition of the function.
+
+```
+Given a dictionary of objects in the scene, returns either "MOVE", "SLOW", or "STOP" for the speed level, depending on how fast the vehicle should move, as well as the ego vehicle turn angle to reach the target location.
+Return "STOP" if the agent needs to stop completely and immediately because there is a red traffic light, uncompleted stop signs, vehicles or pedestrians immediately in front of the vehicle so that the vehicle cannot move without collisions.
+Return "SLOW" if the agent doesn't need to stop immediately but should slow down either because there are vehicles or pedestrians in collision course if the vehicle kept moving, or if there is a red traffic light or uncompleted stop signs ahead that is affecting the vehicle.
+Return "MOVE" if the agent doesn't need to stop or slow. The agent should be moving by default.
+Both the ego location and the target location are given in world coordinates. The turn angle should be returned in the ego vehicle frame (i.e. relative to the ego vehicle's orientation).
+
+Args:
+    - scene_info: dict
+        Contains the following information:
+            {
+                "ego_location_world_coord": np.ndarray,         # numpy array of shape (2,) which contains (x, y) of the center location of the ego vehicle in world coordinates given in [m]
+                "ego_target_location_world_coord": np.ndarray,  # numpy array of shape (2,) which contains (x, y) of the target location of the ego vehicle in world coordinates given in [m]
+                "ego_orientation_unit_vector": np.ndarray,      # numpy array of shape (2,) which contains (x, y) of unit vector orientation of the ego vehicle in world coordinates. The vehicle moves in the direction of the orientation.
+                "ego_forward_speed": float,                     # the speed of the ego vehicle given in [m/s].
+                "ego_length": float,                            # length of the ego vehicle in the orientation direction, given in [m/s].
+                "ego_width": float,                             # width of the ego vehicle perpendicular to the orientation direction, given in [m].
+                "distance_to_red_light": Union[float, None],    # distance to red light given in [m]. None if no traffic lights are affecting the ego vehicle
+                "distance_to_stop_sign": Union[float, None],    # distance to stop sign given in [m]. None if no stop signs are affecting the ego vehicle
+                "vehicles": {                       # dictionary of nearby vehicles
+                    <vehicle_id: int>:  {
+                        "location_world_coord": np.ndarray,     # numpy array of shape (2,) which contains (x, y) of the center location of vehicle <vehicle_id> in world coordinates given in [m]
+                        "orientation_unit_vector": np.ndarray,  # numpy array of shape (2,) which contains (x, y) of unit vector orientation of vehicle <vehicle_id> in world coordinates. The vehicle moves in the direction of the orientation.
+                        "forward_speed": float,                 # speed of vehicle <vehicle_id> given in [m/s].
+                        "forward_length": float,                # length of the vehicle <vehicle_id> along the orientation direction, given in [m].
+                        "sideways_width": float,                # width of the vehicle <vehicle_id> perpendicular to the orientation direction, given in [m].
+                    },
+                },
+                "pedestrians": {                    # dictionary of nearby pedestrians
+                    <pedestrian_id: int>:  {
+                        "location_world_coord": np.ndarray,     # numpy array of shape (2,) which contains (x, y) of the center location of pedestrian <pedestrian_id> in world coordinates given in [m]
+                        "orientation_unit_vector": np.ndarray,  # numpy array of shape (2,) which contains (x, y) of unit vector orientation of pedestrian <pedestrian_id> in world coordinates. The vehicle moves in the direction of the orientation.
+                        "forward_speed": float,                 # speed of pedestrian <pedestrian_id> relative to the orientation given in [m/s].
+                        "forward_length": float,                # length of the pedestrian <pedestrian_id> along the orientation direction, given in [m].
+                        "sideways_width": float,                # width of the pedestrian <pedestrian_id> perpendicular to the orientation direction, given in [m].
+                    },
+                }
+            }
+
+Returns:
+    - speed_level: str          # Choose from ("MOVE", "SLOW", "STOP").
+    - turn_angle: float         # Predicted turn angle of the ego vehicle to reach the target waypoint in [degrees]. The range should be between -180 to 180 degrees
+```
+
+
+Here is an example code that I have written. However, it is not working as expected.
+
+```python
+{{ code }}
+```
+
+I executed the code, and got an accuracy of {{ int(avg_score * 100) }}%.
+
+$begin
+if printed:
+    print("There was a print message saying: {printed}")
+if exception:
+    print(f"""
+The code failed to run because there was an exception.
+The exception message was as follows:
+{exception}
+
+The inputs to the function were the following:
+
+Inputs:
+    - scene_info: {args[0]}
+
+Resolving this exception is the top priority.
+""")
+else:
+    pred_speed_level, pred_turn_angle = outputs
+
+    print(f"""
+
+The code produced incorrect results for the following inputs. The prediction, ground truth label and score were as follows.
+
+Score: {{ int(score * 100) }}%
+
+Inputs:
+    - scene_info: {args[0]}
+
+Incorrect output:
+    - pred_speed_level = {pred_speed_level}
+    - pred_turn_angle = {pred_turn_angle}""")
+    if label is not None:
+        if label["infractions_ahead"] and label["speed_level"] != label["driver_speed_level"] and pred_speed_level == label["driver_speed_level"]:
+
+            infraction_description = {
+                "COLLISION_STATIC": "This means that the ego vehicle collided into a static object.",
+                "COLLISION_VEHICLE": "This means that the ego vehicle collided with another vehicle.",
+                "COLLISION_PEDESTRIAN": "This means that the ego vehicle collided with a pedestrian.",
+                "ROUTE_DEVIATION": "This means that the ego vehicle failed to track the given route and deviated from the route.",
+                "ROUTE_COMPLETION": "This means that the ego vehicle failed to complete the route.",
+                "TRAFFIC_LIGHT_INFRACTION": "This means that the ego vehicle ignored a red traffic light.",
+                "WRONG_WAY_INFRACTION": "This means that the ego vehicle went into a wrong lane.",
+                "ON_SIDEWALK_INFRACTION": "This means that the ego vehicle went into a sidewalk.",
+                "STOP_INFRACTION": "This means that the ego vehicle ignored a slow sign and went at normal speed.",
+                "OUTSIDE_LANE_INFRACTION": "This means that the ego vehicle went outside the lane.",
+                "OUTSIDE_ROUTE_LANES_INFRACTION": "This means that the ego vehicle didn't follow the lane that it is supposed to follow.",
+                "VEHICLE_BLOCKED": "This means that the ego vehicle was stopping / moving slowly for too long without moving.",
+            }
+
+            infractions = "\n".join([f"{name}: {desc}. {infraction_description[name]}" for name, desc in label["infractions_ahead"]])
+
+            print(f"""
+There was an infraction of the following:
+
+{infractions}
+
+This poses a serious safety hazard and must be resolved immediately.
+""")
+        else:
+            print(f"""
+Ground truth label:
+    - gt_speed_level = {label["speed_level"]}
+    - gt_turn_angle = {label["angle"]}
+""")
+$end
+
+$begin
+if feedback:
+    print("""\n{{ feedback }}\n""")
+$end
+
+Pay very close attention to the following:
+
+- All coordinates are given to you as absolute world coordinates, so you must first convert them into relative coordinates with respect to the ego vehicle to do meaningful calculations.
+- Please think carefully when you decide whether it is necessary to stop or not.
+- Some vehicles and pedestrians in view aren't in your way, and stopping all the time would cause disruption.
+- On the other hand, if you do see a vehicle or pedestrian in your way, you should stop to prevent an accident, with a sensible safety margin, e.g. 2 seconds (given the current speed of the vehicle) plus 2 meters of forward margin.
+- Pay attention to the length, width, orientation and velocity of the ego vehicle and the other actors.
+- Usually the car only moves forward so we only need to brake if vehicles and pedestrians are in front of the car.
+- We do not need to brake if the other vehicle or pedestrian is not in collision course with the ego vehicle (e.g. if the other vehicle is in a different lane, we do not need to brake).
+- Make sure you pay close attention to the traffic lights and stop signs if they exist.
+- Note that the standard vehicle speed when it is moving is around 6.0 m/s.
+- Stop signs can be considered completed once the vehicle has slowed down to less than 0.1 m/s, at which point we can resume moving.
+
+
+Keeping this in mind, please do the following:
+
+$begin
+if exception:
+    print("Step 1. Look at the error message carefully and identify the reason why the code failed, and how it can be corrected.")
+else:
+    print("Step 1. Given the example input and output, identify the reason why the code made a wrong prediction, and how it can be corrected to achieve a good driving score.")
+$end
+
+Step 2. Read the code again very carefully. Are there any bugs we've missed? Any edge cases that haven't been considered?
+Step 3. Given the above, please describe step by step what the corrected version of the code should do, making sure that you pay close attention to the edge cases.
+Step 4. Please rewrite the python function `{{ function_name }}` to achieve a higher score, including all necessary import statements. Write descriptive comments for every line of code.

@@ -1,0 +1,249 @@
+import numpy as np
+from typing import Union
+
+def predict_speed_and_steering(scene_info: dict) -> tuple:
+    
+    # Constants used in the function
+    SAFE_WIDTH_MARGIN = 0.5  
+    STOP_MARGIN = 2  
+    ACCELERATION = 3 
+    MAX_SPEED = 6
+    STOP_THRESHOLD_SPEED = 0.1
+    SLOW_MARGIN = 2  # seconds
+    
+    # Convert all coordinates into relative ego vehicle coordinate system
+    ego_loc = np.array(scene_info["ego_location_world_coord"])
+    ego_tgt = np.array(scene_info["ego_target_location_world_coord"])
+    ego_vec = np.array(scene_info["ego_orientation_unit_vector"])
+    ego_speed = scene_info["ego_forward_speed"]
+    ego_len = scene_info["ego_length"]
+    ego_wid = scene_info["ego_width"]
+    ego_speed_limit = min(ego_speed, MAX_SPEED)
+    
+    def to_relative_coor(point):
+        relative_point = point - ego_loc
+        _, _, yaw = np.arctan2(*ego_vec, True)
+        rotation_matrix = np.array([
+            [np.cos(-yaw), -np.sin(-yaw)], 
+            [np.sin(-yaw), np.cos(-yaw)]
+        ])
+        relative_point = np.dot(rotation_matrix, relative_point)
+        return relative_point
+    
+    rel_vehicles, rel_pedestrians = [], []
+    for vehicle_id, vehicle in scene_info["vehicles"].items():
+        veh_loc = to_relative_coor(np.array(vehicle["location_world_coord"]))
+        veh_vec = np.array(vehicle["orientation_unit_vector"])
+        veh_speed = vehicle["forward_speed"]
+        veh_speed_rel = (
+            veh_speed * np.cos(np.arctan2(*veh_vec) - np.arctan2(*ego_vec))
+            - ego_speed
+        )
+        veh_len = vehicle["forward_length"]
+        veh_wid = vehicle["sideways_width"]
+        distance_rel = veh_loc[0]
+        if distance_rel > ego_len + veh_len:
+            continue
+
+        stopping_distance_vehicle = max(
+            veh_speed_rel ** 2 / (2 * ACCELERATION) 
+            + veh_wid / 2 
+            + ego_wid / 2 
+            + STOP_MARGIN 
+            + (SLOW_MARGIN + ego_speed) * veh_speed_rel,
+            STOP_THRESHOLD_SPEED * veh_speed_rel 
+            + ego_wid / 2 
+            + veh_wid / 2 
+            + STOP_MARGIN 
+            + (SLOW_MARGIN + ego_speed) * (STOP_THRESHOLD_SPEED + veh_speed_rel / ACCELERATION)
+        )
+        
+        stopping_time_vehicle = np.maximum([
+            veh_speed_rel / ACCELERATION, 
+            STOP_THRESHOLD_SPEED + (stopping_distance_vehicle - distance_rel) / veh_speed_rel  # time it would take the vehicle to reach the ego vehicle at its speed 
+        ])
+
+        angle_vehicle = np.arctan2(veh_loc[1], distance_rel)
+
+        if abs(veh_loc[1]) <= (ego_wid + veh_wid) / 2 + SAFE_WIDTH_MARGIN:
+            if abs(angle_vehicle) <= np.arcsin((ego_wid + veh_wid) / 2 / distance_rel):
+                rel_vehicles.append(
+                    {
+                        "yaw": angle_vehicle,
+                        "distance_to_obstacle": distance_rel,
+                        "stopping_distance": stopping_distance_vehicle,
+                        "stopping_time": stopping_time_vehicle,
+                        "speed_rel": veh_speed_rel,
+                        "angle_rel": np.arctan2(
+                            veh_loc[1] + veh_wid * np.sign(veh_loc[1]), 
+                            distance_rel + 1e-5
+                        ),  # add a small epsilon to avoid division by zero
+                        "cos_angle": np.cos(np.arctan2(
+                            veh_len / 2 + ego_len / 2 + STOP_MARGIN + ego_speed * SLOW_MARGIN,
+                            distance_rel
+                        ))
+                    }
+                )
+
+    for ped_id, pedestrian in scene_info["pedestrians"].items():
+        ped_loc = to_relative_coor(np.array(pedestrian["location_world_coord"]))
+        ped_speed = pedestrian["forward_speed"]
+        ped_speed_rel = (
+            ped_speed * np.cos(
+                np.arctan2(pedestrian["orientation_unit_vector"][1], pedestrian["orientation_unit_vector"][0])
+                - np.arctan2(ego_vec[1], ego_vec[0])
+            )
+            - ego_speed
+        )
+        ped_len = pedestrian["forward_length"]
+        ped_wid = pedestrian["sideways_width"]
+        distance_rel = ped_loc[0]
+        if distance_rel > ego_len + ped_len:
+            continue
+
+        stopping_distance_pedestrian = max(
+            ped_speed_rel ** 2 / (2 * ACCELERATION) 
+            + ped_wid / 2 
+            + ego_wid / 2 
+            + STOP_MARGIN 
+            + (SLOW_MARGIN + ego_speed) * ped_speed_rel,
+            STOP_THRESHOLD_SPEED * ped_speed_rel 
+            + ego_wid / 2 
+            + ped_wid / 2 
+            + STOP_MARGIN 
+            + (SLOW_MARGIN + ego_speed) * (STOP_THRESHOLD_SPEED + ped_speed_rel / ACCELERATION)
+        )
+
+        stopping_time_pedestrian = np.maximum([
+            ped_speed_rel / ACCELERATION, 
+            STOP_THRESHOLD_SPEED + (stopping_distance_pedestrian - distance_rel) / ped_speed_rel  # time it would take the pedestrian to reach the ego vehicle at its speed 
+        ])
+        
+        angle_pedestrian = np.arctan2(ped_loc[1], distance_rel + 1e-5)
+
+        if abs(ped_loc[1]) <= (ego_wid + ped_wid) / 2 + SAFE_WIDTH_MARGIN:
+            if abs(angle_pedestrian) <= np.arcsin((ego_wid + ped_wid) / 2 / distance_rel):
+                rel_pedestrians.append(
+                    {
+                        "yaw": angle_pedestrian,
+                        "distance_to_obstacle": distance_rel,
+                        "stopping_distance": stopping_distance_pedestrian,
+                        "stopping_time": stopping_time_pedestrian,
+                        "speed_rel": ped_speed_rel,
+                        "angle_rel": np.arctan2(
+                            ped_loc[1] + ped_wid * np.sign(ped_loc[1]), 
+                            distance_rel + 1e-5
+                        ),  # add a small epsilon to avoid division by zero
+                        "cos_angle": np.cos(np.arctan2(
+                            ped_len / 2 + ego_len / 2 + STOP_MARGIN + ego_speed * SLOW_MARGIN,
+                            distance_rel
+                        ))
+                    }
+                )
+
+    stopping_distance_ego = max(
+        ego_speed ** 2 / (2 * ACCELERATION) 
+        + ego_wid / 2 
+        + ego_len / 2 
+        + STOP_MARGIN 
+        + (SLOW_MARGIN + ego_speed) * ego_speed_limit,
+        STOP_THRESHOLD_SPEED * ego_speed 
+        + ego_wid / 2 
+        + ego_len / 2 
+        + STOP_MARGIN 
+        + (SLOW_MARGIN + ego_speed) * (STOP_THRESHOLD_SPEED + ego_speed / ACCELERATION)
+    )
+
+    stopping_time_ego = max([
+        ego_speed_limit / ACCELERATION, 
+        STOP_THRESHOLD_SPEED 
+        + (stopping_distance_ego - np.linalg.norm(ego_tgt - ego_loc)) / ego_speed_limit  
+            # time it would take the ego vehicle to reach its target location at its speed limit 
+    ])
+
+    speed_level = "MOVE"
+
+    for obstacle in sorted(rel_vehicles + rel_pedestrians, key=lambda obs: obs['distance_to_obstacle']):
+
+        if obstacle['angle_rel'] > 0:
+            continue  # skip obstacles that are behind the ego vehicle
+
+        if obstacle['angle_rel'] < -np.pi / 2:
+            continue  # skip obstacles that are too far to the right
+
+        if abs(obstacle['yaw']) > np.arctan2(obstacle['cos_angle'], ego_len / 2 + ego_speed * SLOW_MARGIN):
+            continue  # skip obstacles that are not in the collision course of the ego vehicle
+        
+        if obstacle['speed_rel'] < 0:
+            continue  # skip obstacles that are already moving away
+
+        if obstacle['speed_rel'] == 0 and ego_speed > STOP_THRESHOLD_SPEED:
+            continue  # skip obstacles that have come to a complete stop and the ego vehicle hasn't
+        
+        if obstacle['stopping_distance'] <= stopping_distance_ego and obstacle['stopping_time'] <= stopping_time_ego + SLOW_MARGIN:
+            speed_level = "STOP"
+            break
+        elif obstacle['stopping_time'] <= SLOW_MARGIN and obstacle['distance_to_obstacle'] <= MAX_SPEED * SLOW_MARGIN:
+            speed_level = "SLOW"
+            break
+        
+    distance_to_stop_sign = scene_info["distance_to_stop_sign"]
+    if distance_to_stop_sign is not None and distance_to_stop_sign >= 0:
+        stopping_distance_stop_sign = max(
+            (distance_to_stop_sign - ego_len / 2 - STOP_MARGIN - SLOW_MARGIN * ego_speed) ** 2 / (2 * ego_speed ** 2),
+            STOP_THRESHOLD_SPEED / ACCELERATION
+        )
+
+        stopping_time_stop_sign = max(
+            (distance_to_stop_sign - ego_len / 2 - STOP_MARGIN - SLOW_MARGIN * ego_speed) / ego_speed, 
+            STOP_THRESHOLD_SPEED
+        )
+        
+        if stopping_distance_stop_sign <= stopping_distance_ego and stopping_time_stop_sign <= stopping_time_ego + SLOW_MARGIN:
+            if ego_speed > STOP_THRESHOLD_SPEED:
+                speed_level = "SLOW"
+            elif ego_speed <= STOP_THRESHOLD_SPEED:
+                speed_level = "STOP"
+    
+    distance_to_red_light = scene_info["distance_to_red_light"]
+    if distance_to_red_light is not None and distance_to_red_light >= 0:
+        stopping_distance_red_light = max(
+            (distance_to_red_light - ego_len / 2 - STOP_MARGIN - SLOW_MARGIN * ego_speed) ** 2 / (2 * ego_speed ** 2),
+            STOP_THRESHOLD_SPEED / ACCELERATION
+        )
+
+        stopping_time_red_light = max(
+            (distance_to_red_light - ego_len / 2 - STOP_MARGIN - SLOW_MARGIN * ego_speed) / ego_speed, 
+            STOP_THRESHOLD_SPEED
+        )
+
+        if stopping_distance_red_light <= stopping_distance_ego and stopping_time_red_light <= stopping_time_ego + SLOW_MARGIN:
+            if ego_speed > STOP_THRESHOLD_SPEED:
+                speed_level = "SLOW"
+            elif ego_speed <= STOP_THRESHOLD_SPEED:
+                speed_level = "STOP"
+
+    if np.linalg.norm(ego_tgt - ego_loc) == 0 or np.dot(ego_vec, ego_tgt - ego_loc) < 0:
+        speed_level = "STOP"
+    else:
+        target_dir_vec = ego_tgt - ego_loc
+        target_dir_vec_ego_frame = np.array([
+            np.dot(target_dir_vec, ego_vec),
+            np.dot(target_dir_vec, np.array([-ego_vec[1], ego_vec[0]]))
+        ])
+        target_angle = np.arctan2(target_dir_vec_ego_frame[1], target_dir_vec_ego_frame[0]) * 180 / np.pi
+        turn_angle = target_angle - 3 * np.arctan2(
+            ego_vec[1], ego_vec[0]
+        ) * 180 / np.pi  # use 3/4 proportional control
+        if abs(turn_angle) > 180:
+            turn_angle -= np.sign(turn_angle) * 360
+        if speed_level != "STOP":
+            if speed_level == "SLOW" or abs(turn_angle) > 30:
+                ego_speed_limit = max(ego_speed_limit - ACCELERATION * 1/10, STOP_THRESHOLD_SPEED)
+            else:
+                ego_speed_limit = min(
+                    ego_speed_limit + ACCELERATION * (3/10 if ego_speed < MAX_SPEED else 1/10),
+                    MAX_SPEED * (1 - 0.2 * np.abs(turn_angle) / 180)
+                )
+
+    return speed_level, turn_angle

@@ -1,0 +1,134 @@
+import numpy as np
+from typing import List, Tuple, Union, Dict
+
+def predict_speed_and_steering(scene_info: Dict, stopping_time_margin=2.0, 
+                               reaction_time=1.0, stopping_speed=0.1, slow_speed=2.5, 
+                               safety_margin=2.0, steer_gain=1.0) -> Tuple[str, float]:
+    """
+    Given the state of the scene, find the required speed level and turn angle of the ego vehicle.
+    
+    Args:
+        scene_info (dict): Contains information about the scene.
+        stopping_time_margin (float): Time margin to determine when to stop in seconds [default: 2.0]
+        reaction_time (float): Time taken to react to external events in seconds [default: 1.0]
+        stopping_speed (float): Minimum speed below which the vehicle should stop in m/s [default: 0.1]
+        slow_speed (float): Speed at which the vehicle should slow down in m/s [default: 2.5]
+        safety_margin (float): Safety margin in meters between the vehicle and other objects [default: 2.0]
+        steer_gain (float): Proportional gain for steering control [default: 1.0]
+
+    Returns:
+        (str, float): A tuple containing the required speed level and turn angle of the ego vehicle.
+                      The speed level can be "MOVE", "SLOW", or "STOP". The turn angle should be a float between -180 to 180 degrees.
+    """
+    
+    # The first thing to do is to check if the inputs are valid and handle any edge cases.
+    if not isinstance(scene_info, dict):
+        raise TypeError("scene_info must be a dictionary")
+    
+    if not all(key in scene_info for key in ["ego_location_world_coord", "ego_target_location_world_coord",
+                                              "ego_orientation_unit_vector", "ego_forward_speed", "ego_length", "ego_width",
+                                              "distance_to_red_light", "distance_to_stop_sign", "vehicles", "pedestrians"]):
+        raise ValueError("scene_info does not contain all needed keys")
+    
+    if not isinstance(stopping_time_margin, (float, int)) or stopping_time_margin <= 0:
+        raise ValueError("stopping_time_margin must be a float > 0")
+        
+    if not isinstance(reaction_time, (float, int)) or reaction_time <= 0:
+        raise ValueError("reaction_time must be a float > 0")
+        
+    if not isinstance(stopping_speed, (float, int)) or stopping_speed <= 0:
+        raise ValueError("stopping_speed must be a float > 0")
+        
+    if not isinstance(slow_speed, (float, int)) or slow_speed <= 0:
+        raise ValueError("slow_speed must be a float > 0")
+        
+    if not isinstance(safety_margin, (float, int)) or safety_margin <= 0:
+        raise ValueError("safety_margin must be a float > 0")
+        
+    if not isinstance(steer_gain, (float, int)) or steer_gain <= 0:
+        raise ValueError("steer_gain must be a float > 0")
+
+    ego_forward_speed = max(scene_info['ego_forward_speed'], 0)
+    stopping_distance = (max(ego_forward_speed, stopping_speed) ** 2) / (2 * 0.4) + safety_margin + (scene_info['ego_length'] / 2)
+    slow_distance = slow_speed * (stopping_time_margin + reaction_time) + safety_margin + (scene_info['ego_length'] / 2)
+
+    # Check for traffic lights and stop signs
+    if scene_info['distance_to_stop_sign'] is not None and scene_info['distance_to_stop_sign'] <= stopping_distance:
+        if ego_forward_speed <= stopping_speed:
+            speed_level = "MOVE"
+        else:
+            stopping_speed_current = max(scene_info['distance_to_stop_sign'] / 2, stopping_speed)
+            ego_forward_speed = max(stopping_speed_current, 0)
+            speed_level = "STOP"
+    elif scene_info['distance_to_red_light'] is not None and scene_info['distance_to_red_light'] <= stopping_distance:
+        speed_level = "STOP"
+    else:
+        closest_vehicle_distance = float('inf')
+        closest_vehicle_lateral_distance = float('inf')
+        closest_vehicle_id = None
+
+        vehicles = scene_info['vehicles']
+        pedestrians = scene_info['pedestrians']
+
+        if len(vehicles) == 0 and len(pedestrians) == 0:
+            speed_level = "MOVE"
+        else:
+            # Convert all coordinates for vehicles and pedestrians to relative coordinates in terms of the ego vehicle orientation.
+            for vehicle_id, vehicle_data in vehicles.items():
+                vehicle_location = np.array(vehicle_data['location_world_coord']) - scene_info['ego_location_world_coord']
+                vehicle_orientation = np.array(vehicle_data['orientation_unit_vector'])
+                vehicle_speed = vehicle_data['forward_speed']
+                vehicle_length = vehicle_data['forward_length'] + scene_info['ego_length']
+                vehicle_width = vehicle_data['sideways_width'] + scene_info['ego_width']
+                vehicle_location_rel = np.dot(vehicle_location, scene_info['ego_orientation_unit_vector']), np.dot([-scene_info['ego_orientation_unit_vector'][1], scene_info['ego_orientation_unit_vector'][0]], vehicle_location)
+
+                longitudinal_distance = vehicle_location_rel[0] - vehicle_length / 2 - scene_info['ego_length'] / 2
+                lateral_distance = np.abs(vehicle_location_rel[1]) - vehicle_width / 2 - scene_info['ego_width'] / 2
+
+                if longitudinal_distance < closest_vehicle_distance:
+                    closest_vehicle_distance = longitudinal_distance
+                    closest_vehicle_lateral_distance = lateral_distance
+                    closest_vehicle_id = vehicle_id
+                    
+            for pedestrian_id, pedestrian_data in pedestrians.items():
+                pedestrian_location = np.array(pedestrian_data['location_world_coord']) - scene_info['ego_location_world_coord']
+                pedestrian_orientation = np.array(pedestrian_data['orientation_unit_vector'])
+                pedestrian_speed = pedestrian_data['forward_speed']
+                pedestrian_length = pedestrian_data['forward_length'] + scene_info['ego_length']
+                pedestrian_width = pedestrian_data['sideways_width'] + scene_info['ego_width']
+                pedestrian_location_rel = np.dot(pedestrian_location, scene_info['ego_orientation_unit_vector']), np.dot([-scene_info['ego_orientation_unit_vector'][1], scene_info['ego_orientation_unit_vector'][0]], pedestrian_location)
+                
+                longitudinal_distance = pedestrian_location_rel[0] - pedestrian_length / 2 - scene_info['ego_length'] / 2
+                lateral_distance = np.abs(pedestrian_location_rel[1]) - pedestrian_width / 2 - scene_info['ego_width'] / 2
+                
+                if longitudinal_distance < closest_vehicle_distance:
+                    closest_vehicle_distance = longitudinal_distance
+                    closest_vehicle_lateral_distance = lateral_distance
+                    closest_vehicle_id = pedestrian_id
+
+            if closest_vehicle_distance < stopping_distance - ego_forward_speed ** 2 / (2 * 0.4):
+                speed_level = "STOP"
+                
+                if closest_vehicle_lateral_distance < 0 or closest_vehicle_distance < stopping_distance - scene_info['ego_length'] / 2 - safety_margin:
+                    ego_forward_speed = stopping_speed
+                else:
+                    ego_forward_speed = max(closest_vehicle_distance - scene_info['ego_length'] / 2 - safety_margin + stopping_speed / 2, stopping_speed)
+
+            elif closest_vehicle_distance < slow_distance:
+                speed_level = "SLOW"
+                speed_factor = (closest_vehicle_distance - scene_info['ego_length'] / 2 - safety_margin) / (slow_distance - scene_info['ego_length'] / 2 - safety_margin)
+                speed_factor = min(max(speed_factor, 0.0), 1.0)
+                ego_forward_speed = slow_speed * speed_factor + ego_forward_speed * (1 - speed_factor)
+
+            else:
+                speed_level = "MOVE"
+          
+    target_direction = scene_info['ego_target_location_world_coord'] - scene_info['ego_location_world_coord']
+    target_direction_ego = np.dot(target_direction, scene_info['ego_orientation_unit_vector']), np.dot([-scene_info['ego_orientation_unit_vector'][1], scene_info['ego_orientation_unit_vector'][0]], target_direction)
+
+    target_angle = (np.arctan2(target_direction_ego[1], target_direction_ego[0]) * 180.0 / np.pi) if np.linalg.norm(target_direction_ego) > 0 else 0.0
+    target_angle = ((target_angle + 180) % 360) - 180
+    turn_angle = steer_gain * target_angle
+
+    return speed_level, turn_angle
+
