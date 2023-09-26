@@ -1,8 +1,10 @@
 # LangProp: A code optimization framework using Language Models applied to driving
 
+![LangProp driving in CARLA](./assets/langprop_carla_run.gif)
+
 ## About
-LangProp is a framework of generating code using ChatGPT, and evaluate the code performance against a dataset of expected 
-outputs in a supervised learning setting. Usually, ChatGPT generates code which is sensible but fails for some edge cases, and then you need to go back and prompt ChatGPT again with the error.
+LangProp is a framework for generating code using ChatGPT, and evaluate the code performance against a dataset of expected 
+outputs in a supervised/reinforcement learning setting. Usually, ChatGPT generates code which is sensible but fails for some edge cases, and then you need to go back and prompt ChatGPT again with the error.
 This framework saves you the hassle by automatically feeding in the exceptions back into ChatGPT in a training loop, so that ChatGPT can iteratively improve the code it generates.
 
 The framework works similarly to PyTorch Lightning. You prepare the following:
@@ -13,6 +15,8 @@ The framework works similarly to PyTorch Lightning. You prepare the following:
   - The preprocessing step converts the items retrieved from the dataset into input-output pairs.
 
 Then, watch LangProp generate better and better code.
+
+![Overview of the LangProp framework](./assets/langprop_overview.png)
 
 ## Setup
 1. Install anaconda or miniconda
@@ -84,6 +88,8 @@ python ./src/langprop/examples/factorials/test_run.py
 The resulting code (which we call checkpoints) and the log of ChatGPT prompts and queries can be found in `lm_logs` in the root directory.
 
 # LangProp applied to driving in CARLA
+
+![LangProp applied to driving](./assets/langprop_driver.png)
 
 The bash scripts used below has been written to work in a Linux environment.
 
@@ -201,7 +207,24 @@ The training statistics are logged in Weights and Biases. The URL to the log wil
    2. Navigate to the last checkpoint in the most recent complete route (in `<EXPERIMENT_DIR>/<ROUTE_DIR>/lm_policy/ckpt/<STEP>_batch_update/predict_speed_and_steering`) and set `export POLICY_CKPT=<CHECKPOINT_DIR>` to this entire path (finishing with `predict_speed_and_steering`). 
 5. Resume your experiment by running `bash scripts/<whichever_experiment_you_were_running>.sh`.
 
-## Trying third-party baselines
+### Save video
+   Go to the experiments folder that saves the images and run, for example
+   ```
+   ffmpeg -framerate 10 -i debug/%04d.jpg outputs.mp4
+   ```
+
+### Watch video
+   Videos of sample runs can be found in [videos](./videos). Make sure that you have pulled from Git LFS first via `git lfs pull`.
+
+### Pre-trained model checkpoints
+   Pre-trained checkpoints can be found in [checkpoints](./checkpoints). We provide checkpoints for LangProp trained offline, DAgger with IL (imitation learning), DAgger with both IL and RL (reinforcement learning), and online with both IL and RL.
+   You can evaluate them by running the [evaluation commands](https://github.com/langprop-iclr24/LangProp/tree/main#evaluate-langprop-agent):
+   ```
+   export POLICY_CKPT=<CHECKPOINT_DIR>
+   bash scripts/data_collect/lmdrive_eval.sh <RUN_NAME>
+   ```
+
+## Third-party baselines
 Third party baselines are cloned into the repository as git submodules. The evaluation scripts are under the [./scripts/eval_expert](./scripts/eval_expert) directory.
 
 - [Carla Garage: Hidden Biases of End-to-End Driving Models
@@ -218,13 +241,6 @@ Third party baselines are cloned into the repository as git submodules. The eval
 
 More details on the baselines can be found in [baselines.md](./src/baselines/README.md).
 To run the baselines, refer to the `README.md` files under the [./3rdparty](./3rdparty) submodules.
-
-
-## Save video
-   Go to the experiments folder that saves the images and run, for example
-   ```
-   ffmpeg -framerate 10 -i debug/%04d.jpg outputs.mp4
-   ```
 
 ## Further details
 ### Setting up CARLA and the offline leaderboard
