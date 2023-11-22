@@ -74,7 +74,7 @@ This only has to be done once to generate the training data.
 python ./src/langprop/examples/sudoku/generate.py
 ```
 
-### Run training loop
+#### Run training loop
 ```
 python ./src/langprop/examples/sudoku/test_run.py
 ```
@@ -85,7 +85,7 @@ The resulting code (which we call checkpoints) and the log of ChatGPT prompts an
 This example solves `CartPole-v1` in openai gym (now part of gymnasium). Initially the LLM generates solutions which are simplistic and does not balance the CartPole.
 With a simple monte carlo method of optimizing the policy for the total rewards, we can obtain improved policies using LangProp.
 
-### Run training loop
+#### Run training loop
 ```
 python ./src/langprop/examples/cartpole/test_run.py
 ```
