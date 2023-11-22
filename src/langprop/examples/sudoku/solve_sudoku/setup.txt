@@ -1,0 +1,13 @@
+$import _intro.txt
+
+This is a template of the code.
+
+```python
+def {{ function_name }}(sudoku: np.ndarray, width: int, height: int) -> np.ndarray:
+    # Write code here
+    return solution
+```
+
+Please do the following:
+Step 1. Describe step by step what the code should do in order to achieve its task.
+Step 2. Provide a python code solution that implements your strategy, including all necessary import statements.

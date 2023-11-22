@@ -1,0 +1,55 @@
+
+import numpy as np
+
+def solve_cartpole(cart_position, cart_velocity, pole_angle, pole_angular_velocity) -> int:
+    # Constants used in the PID controller
+    Kp = 1
+    Ki = 0.001
+    Kd = 10
+
+    # Constants used for mapping the controller output to an action
+    cart_direction_threshold = 0.05
+    zero_action = 0
+    positive_action = 1
+
+    # calculate the estimated future state after one time step
+    g = 9.8  # acceleration due to gravity
+    cart_mass = 1.0
+    pole_mass = 0.1
+    pole_length = 0.5
+    total_mass = cart_mass + pole_mass
+    gamma = pole_mass / total_mass
+    omega = pole_length * pole_mass / total_mass
+    alpha = g * (gamma * np.sin(pole_angle) - np.cos(pole_angle) * (cart_mass + gamma))
+    cart_acceleration = ((alpha + gamma * omega * pole_angular_velocity ** 2 * np.sin(pole_angle)) /
+                         (omega * (4 / 3 - gamma * np.cos(pole_angle) ** 2 / total_mass)))
+    pole_acceleration = (-alpha * np.cos(pole_angle) - gamma * omega * pole_angular_velocity ** 2 * np.sin(pole_angle) * np.cos(pole_angle) /
+                         (omega * pole_length * (4 / 3 - gamma * np.cos(pole_angle) ** 2 / total_mass)))
+
+    # calculate the estimated future state
+    estimated_cart_position = cart_position + cart_velocity
+    estimated_cart_velocity = cart_velocity + cart_acceleration
+    estimated_pole_angle = pole_angle + pole_angular_velocity
+    estimated_pole_angular_velocity = pole_angular_velocity + pole_acceleration
+
+    # calculate the error state
+    error_state = estimated_pole_angle - 0
+
+    # Calculate the proportional, integral, and derivative components of the PID controller
+    proportional = Kp * error_state
+    integral = Ki * error_state
+    derivative = Kd * estimated_pole_angular_velocity
+
+    # Calculate the controller output
+    controller_output = proportional + integral + derivative
+
+    # Convert the controller output to an action
+    if controller_output < -cart_direction_threshold:
+        action = zero_action  # push the cart to the left
+    elif controller_output > cart_direction_threshold:
+        action = positive_action  # push the cart to the right
+    else:
+        action = zero_action  # no action needed
+
+    return action
+

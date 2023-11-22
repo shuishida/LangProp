@@ -61,12 +61,57 @@ You will find that a new `checkpoint.txt` has been generated in the directory `.
 python ./src/langprop/examples/factorials/test_policy.py
 ```
 
-### Run a full training loop that involves updates in case there are any exceptions
+### Run a full training loop that optimizes the code if there are any exceptions or errors
 ```
 python ./src/langprop/examples/factorials/test_run.py
 ```
 
-The resulting code (which we call checkpoints) and the log of ChatGPT prompts and queries can be found in `lm_logs` in the root directory.
+The resulting code (which we call checkpoints) and the log of ChatGPT prompts and queries can be found in `lm_logs` in the root directory. An example checkpoint can be found at [./examples/factorials/example_checkpoint](./examples/factorials/example_checkpoint).
+
+## More examples
+### Sudoku
+This example solves Sudoku. Instead of solving the standard 3x3 puzzle, we solve a general sudoku that consists of W x H subblocks, each with H x W elements.
+Due to the complexity in the specification, an LLM would often fail on the first attempt, but using LangProp allows us to filter out incorrect results and arrive at a fully working solution.
+
+At the start, make sure you add `src` to the `PYTHONPATH` by running
+```
+export PYTHONPATH=./src/:${PYTHONPATH}
+```
+
+#### Generate training dataset
+This only has to be done once to generate the training data.
+```
+python ./src/langprop/examples/sudoku/generate.py
+```
+
+### Run a full training loop
+```
+python ./src/langprop/examples/sudoku/test_run.py
+```
+
+The resulting code (which we call checkpoints) and the log of ChatGPT prompts and queries can be found in `lm_logs` in the root directory. An example checkpoint can be found at [./examples/sudoku/example_checkpoint](./examples/sudoku/example_checkpoint).
+
+### CartPole
+This example solves `CartPole-v1` in openai gym (now part of gymnasium). Initially the LLM generates solutions which are simplistic and does not balance the CartPole.
+With a simple monte carlo method of optimizing the policy for the total rewards, we can obtain improved policies using LangProp.
+
+At the start, make sure you add `src` to the `PYTHONPATH` by running
+```
+export PYTHONPATH=./src/:${PYTHONPATH}
+```
+
+### Run a full training loop
+```
+python ./src/langprop/examples/cartpole/test_run.py
+```
+
+The training code uses utility functions defined in [gym_utils.py](gym_utils.py).
+
+Here is a sample video of the training result:
+
+![Sample video of CartPole-v1](./examples/cartpole/sample_video.gif)
+
+The resulting code (which we call checkpoints) and the log of ChatGPT prompts and queries can be found in `lm_logs` in the root directory. An example checkpoint can be found at [./examples/cartpole/example_checkpoint](./examples/cartpole/example_checkpoint).
 
 ## Template engine
 

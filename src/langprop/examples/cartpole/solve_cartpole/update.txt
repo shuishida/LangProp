@@ -6,7 +6,7 @@ Here is an example code that I have written. However, it is not working as expec
 {{ code }}
 ```
 
-I executed the code, and got an accuracy of {{ int(avg_score * 100) }}%.
+I executed the code, but the performance was not very high. I got a score of {{ int(avg_score) }} where a good score is 500.
 
 $begin
 if printed:
@@ -17,16 +17,6 @@ if exception:
 else:
     if {{ same_outputs }}:
         print("It also seems that the code produces the same output of ```{{ outputs }}``` for all inputs, which is not the behaviour we want.")
-
-    print("""
-
-The code produced incorrect results for the following inputs. The prediction, ground truth label and score were as follows.
-
-Inputs: {{ args[0] }}
-Incorrect prediction: factorial = {{ outputs }}""")
-    if {{ label }}:
-        print("Ground truth label: factorial = {{ label }}")
-    print("Score: {{ int(score * 100) }}%")
 $end
 
 $begin

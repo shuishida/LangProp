@@ -1,0 +1,28 @@
+import gym
+
+def solve_cartpole(cart_position: float, cart_velocity: float, pole_angle: float, pole_angular_velocity: float) -> int:
+    # Create an instance of the CartPole environment
+    env = gym.make('CartPole-v1')
+
+    # Reset the environment and set the state
+    state = env.reset()
+    state[0], state[1], state[2], state[3] = cart_position, cart_velocity, pole_angle, pole_angular_velocity
+    env.state = state
+
+    # Define the policy function
+    def policy(observation):
+        cart_pos, cart_vel, pole_ang, pole_vel = observation
+        # Use a set of rules to determine the appropriate action to take
+        # If the pole is tilted to the right and the cart is moving to the right, or the pole is tilted to the left and the cart is moving to the left, push the cart in the same direction
+        # Otherwise, push the cart in the opposite direction
+        if (pole_ang > 0 and pole_vel > 0 and cart_vel > 0) or (pole_ang < 0 and pole_vel < 0 and cart_vel < 0):
+            action = 1
+        else:
+            action = 0
+        return action
+
+    # Apply policy function to the current state
+    action = policy(state)
+
+    # Return the action
+    return action

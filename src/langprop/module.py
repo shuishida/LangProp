@@ -1,6 +1,7 @@
 import inspect
 import json
 import os.path
+import random
 import traceback
 from copy import deepcopy
 from datetime import datetime
@@ -122,12 +123,14 @@ class TrainRecordContext:
 
 
 class LPModule:
-    def __init__(self, setup: str, update: str, name=None, trainable=True, **kwargs):
+    def __init__(self, setup: str, update: str, name=None, trainable=True, return_function=False, **kwargs):
         self.name = name
         self.trainable = trainable
 
         self.setup_template = setup
         self.update_template = update
+
+        self.return_function = return_function
 
         self.setup_prompt = None
         self.script_records: List[ScriptRecord] = []  # list of script records in the order of the score
@@ -175,8 +178,8 @@ class LPModule:
             if k is not self.name:
                 locals()[k] = lambda *_args, **_kwargs: v(*_args, **_kwargs, call_origin=script)
         exec(script, locals(), locals())
-        output = locals()[self.name](*args, **kwargs)
-        return output
+        function = locals()[self.name]
+        return function if self.return_function else function(*args, **kwargs)
 
     def parse_response(self, response, prev_record: Optional[ScriptRecord] = None):
         py_code = extract_block(response)
@@ -203,7 +206,7 @@ class LPModule:
         print(f"Completed setup for {self.name}")
 
     def sort_records(self):
-        self.script_records.sort(key=lambda x: x.priority, reverse=True)
+        self.script_records.sort(key=lambda x: (x.priority, random.random()), reverse=True)
 
     def reset_trackers(self):
         for record in self.script_records:

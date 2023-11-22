@@ -1,0 +1,40 @@
+import numpy as np
+
+def solve_cartpole(cart_position, cart_velocity, pole_angle, pole_angular_velocity) -> int:
+    # Constants used in the PID controller
+    Kp = 0.5
+    Ki = 0.001
+    Kd = 0.5
+
+    # Constants used for mapping the controller output to an action
+    zero_action = 0
+    positive_action = 1
+
+    # Define the state vector
+    state = np.array([cart_position, cart_velocity, pole_angle, pole_angular_velocity])
+
+    # Define the target state (i.e., the state we want to achieve)
+    target = np.array([0, 0, 0, 0])
+
+    # Define the state error and integrate it
+    if 'integral' not in solve_cartpole.__dict__:
+        solve_cartpole.integral = np.zeros(4)
+        
+    error = target - state
+    solve_cartpole.integral += error
+    
+    # Compute the controller output
+    proportional = Kp * error
+    integral = Ki * solve_cartpole.integral
+    derivative = Kd * state[3]
+    controller_output = np.sum(proportional + integral + derivative)
+    
+    # Convert the controller output to an action
+    if controller_output < 0:
+        action = zero_action  # push the cart to the left
+    elif controller_output > 0:
+        action = positive_action  # push the cart to the right
+    else:
+        action = zero_action  # no action needed
+
+    return action

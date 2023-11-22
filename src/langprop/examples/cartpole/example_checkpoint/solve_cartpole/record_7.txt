@@ -1,0 +1,24 @@
+import numpy as np
+
+def solve_cartpole(cart_position, cart_velocity, pole_angle, pole_angular_velocity) -> int:
+    # Calculate total observation state
+    observation = np.array([cart_position, cart_velocity, pole_angle, pole_angular_velocity])
+
+    # Define policy function
+    def policy(observation):
+        # Unpack observation
+        cart_pos, cart_vel, pole_ang, pole_vel = observation
+
+        # Calculate the action based on the pole angle
+        if pole_ang > 0:
+            action = 1  # Push cart to the right
+        else:
+            action = 0  # Push cart to the left
+
+        return action
+
+    # Apply policy function to observation
+    action = policy(observation)
+
+    # Return the action
+    return action

@@ -1,0 +1,51 @@
+import numpy as np
+
+def solve_sudoku(sudoku: np.ndarray, width: int, height: int) -> np.ndarray:
+
+    def is_valid(num: int, row: int, col: int) -> bool:
+        # Check if num is valid in current row
+        if num in sudoku[row,:]:
+            return False
+        # Check if num is valid in current column
+        if num in sudoku[:,col]:
+            return False
+        # Check if num is valid in current sub-grid
+        row_start = (row // height) * height
+        col_start = (col // width) * width
+        sub_grid = sudoku[row_start:row_start+height, col_start:col_start+width].flatten()
+        if num in sub_grid:
+            return False
+        # All checks pass
+        return True
+
+
+    def solve_cell(row: int, col: int) -> bool:
+        # Base case: if we have filled all cells, puzzle is solved
+        if row == height*width:
+            return True
+        # If cell already has a value, move on to next cell
+        if sudoku[row,col] != 0:
+            if col == width*height-1:
+                return solve_cell(row+1, 0)
+            else:
+                return solve_cell(row, col+1)
+        # Try numbers from 1 to height*width until one is valid
+        for num in range(1,height*width+1):
+            if is_valid(num, row, col):
+                sudoku[row,col] = num
+                if col == width*height-1:
+                    if solve_cell(row+1, 0):
+                        return True
+                else:
+                    if solve_cell(row, col+1):
+                        return True
+                        
+                # The solution is invalid, undo and try again
+                sudoku[row, col] = 0
+                
+        # If no valid number found, backtrack
+        return False
+
+    # Start solving from top left cell
+    solve_cell(0,0)
+    return sudoku

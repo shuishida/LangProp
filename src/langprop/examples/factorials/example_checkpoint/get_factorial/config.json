@@ -1,0 +1,51 @@
+{
+    "name": "get_factorial",
+    "step": 3,
+    "records": {
+        "0": {
+            "main": {
+                "priority": 1.0,
+                "past_priority": 1.0,
+                "past_weight": 384.0,
+                "count": 116,
+                "avg_score": 1.0
+            }
+        },
+        "1": {
+            "main": {
+                "priority": 1.0,
+                "past_priority": 1.0,
+                "past_weight": 256.0,
+                "count": 116,
+                "avg_score": 1.0
+            }
+        },
+        "2": {
+            "main": {
+                "priority": 1.0,
+                "past_priority": 1.0,
+                "past_weight": 128.0,
+                "count": 116,
+                "avg_score": 1.0
+            }
+        },
+        "3": {
+            "main": {
+                "priority": 1.0,
+                "past_priority": 0,
+                "past_weight": 0,
+                "count": 116,
+                "avg_score": 1.0
+            }
+        },
+        "4": {
+            "main": {
+                "priority": -1.0,
+                "past_priority": -1.0,
+                "past_weight": 384.0,
+                "count": 116,
+                "avg_score": -1.0
+            }
+        }
+    }
+}

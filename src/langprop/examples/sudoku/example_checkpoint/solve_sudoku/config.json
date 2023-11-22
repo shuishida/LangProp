@@ -1,0 +1,33 @@
+{
+    "name": "solve_sudoku",
+    "step": 6,
+    "records": {
+        "0": {
+            "main": {
+                "priority": 1.0,
+                "past_priority": 1.0,
+                "past_weight": 10.0,
+                "count": 10,
+                "avg_score": 1.0
+            }
+        },
+        "1": {
+            "main": {
+                "priority": 1.0,
+                "past_priority": 0,
+                "past_weight": 0,
+                "count": 10,
+                "avg_score": 1.0
+            }
+        },
+        "2": {
+            "main": {
+                "priority": 0.9428571428571428,
+                "past_priority": 0.9333333333333333,
+                "past_weight": 60.0,
+                "count": 10,
+                "avg_score": 1.0
+            }
+        }
+    }
+}

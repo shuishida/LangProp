@@ -1,0 +1,33 @@
+import math
+
+def solve_cartpole(cart_position, cart_velocity, pole_angle, pole_angular_velocity) -> int:
+    # Constants used in the PID controller
+    Kp = 1
+    Ki = 0.001
+    Kd = 10
+
+    # Constants used for mapping the controller output to an action
+    cart_direction_threshold = 0.05
+    zero_action = 0
+    positive_action = 1
+
+    # Calculate the error state
+    error_state = pole_angle - 0
+
+    # Calculate the proportional, integral, and derivative components of the PID controller
+    proportional = Kp * error_state
+    integral = Ki * error_state
+    derivative = Kd * pole_angular_velocity
+
+    # Calculate the controller output
+    controller_output = proportional + integral + derivative
+
+    # Convert the controller output to an action
+    if controller_output < -cart_direction_threshold:
+        action = zero_action  # push the cart to the left
+    elif controller_output > cart_direction_threshold:
+        action = positive_action  # push the cart to the right
+    else:
+        action = zero_action  # no action needed
+
+    return action

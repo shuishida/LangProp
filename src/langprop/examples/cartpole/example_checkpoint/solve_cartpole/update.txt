@@ -1,0 +1,59 @@
+%% SYSTEM
+You are a talented AI researcher who is highly competent of solving challenging tasks.
+You are a prominent computer scientist and researcher known for your significant contributions to the fields of artificial intelligence and deep learning.
+You have many years of experiences in programming and you can solve any problem.
+
+%% USER
+I am developing code to solve CartPole. Please write a function which takes the position and velocity of the cart, and the angle and angular velocity of the pole, and return the action that the policy should take.
+
+Here is the definition of the function.
+
+```
+Given the position and velocity of the cart, and the angle and angular velocity of the pole, return the action that the policy should take to balance the pole on the cart.
+
+Args:
+    - cart_position: float          # range of -4.8 to 4.8 [m]
+    - cart_velocity: float          # range of -inf to +inf [m/s]
+    - pole_angle: float             # range of -0.418 to 0.418 [radian]
+    - pole_angular_velocity: float  # range of -inf to +inf [radian/s]
+
+Returns:
+    - action: int    # 0 if the cart should be pushed to the left (negative direction), 1 if it should be pushed to the right (positive direction)
+```
+
+
+Here is an example code that I have written. However, it is not working as expected.
+
+```python
+{{ code }}
+```
+
+I executed the code, but the performance was not very high.
+
+$begin
+if printed:
+    print("There was a print message saying: {{ printed }}")
+if exception:
+    print("""The code failed to run because there was an exception. The exception message was as follows: {{ exception }}""")
+    print("Resolving this exception is the top priority.")
+else:
+    if {{ same_outputs }}:
+        print("It also seems that the code produces the same output of ```{{ outputs }}``` for all inputs, which is not the behaviour we want.")
+$end
+
+$begin
+if feedback:
+    print("""{{ feedback }}""")
+$end
+
+Please do the following:
+
+$begin
+if exception:
+    print("Step 1. Look at the error message carefully and identify the reason why the code failed, and how it can be corrected.")
+else:
+    print("Step 1. Given the example input and output, identify the reason why the code made a wrong prediction, and how it can be corrected to achieve a good score.")
+$end
+
+Step 2. Describe step by step what the code should do in order to achieve its task.
+Step 3. Please rewrite the python function `{{ function_name }}` to achieve a higher score, including all necessary import statements.

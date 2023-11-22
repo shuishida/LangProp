@@ -1,0 +1,15 @@
+import numpy as np
+
+def solve_cartpole(cart_position, cart_velocity, pole_angle, pole_angular_velocity) -> int:
+    # Define the system parameters
+    angle_threshold = 0.05   # in radians
+    
+    # Check which way the pole is leaning
+    if pole_angle < -angle_threshold:   # Pole is leaning to the left
+        action = 0   # Move the cart to the left
+    elif pole_angle > angle_threshold:   # Pole is leaning to the right
+        action = 1   # Move the cart to the right
+    else:   # Pole is vertical
+        action = 1   # Move the cart to the right
+    
+    return action

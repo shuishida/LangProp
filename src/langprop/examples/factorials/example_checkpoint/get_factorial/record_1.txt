@@ -1,0 +1,9 @@
+import math
+
+def get_factorial(number: int) -> int:
+    if number < 0:
+        raise ValueError("Input must be non-negative")
+    elif number == 0:
+        return 1
+    else:
+        return math.factorial(number)

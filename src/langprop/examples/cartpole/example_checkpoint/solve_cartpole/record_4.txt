@@ -1,0 +1,60 @@
+import numpy as np
+
+
+class PID:
+    """
+    A simple implementation of a PID controller.
+    """
+
+    def __init__(self, Kp, Ki, Kd):
+        self.Kp = Kp
+        self.Ki = Ki
+        self.Kd = Kd
+        self.reset()
+
+    def reset(self):
+        self.error = 0
+        self.last_error = 0
+        self.integral = 0
+        self.derivative = 0
+
+    def update(self, error, dt):
+        self.error = error
+        self.integral += error * dt
+        self.derivative = (error - self.last_error) / dt
+        self.last_error = error
+        return self.Kp * error + self.Ki * self.integral + self.Kd * self.derivative
+
+
+def solve_cartpole(cart_position: float, cart_velocity: float, pole_angle: float, pole_angular_velocity: float) -> int:
+    # Define the system parameters
+    cart_threshold = 2.4
+    pole_threshold = 0.209
+    pid = PID(Kp=1.0, Ki=0.0, Kd=0.0)
+
+    # Determine the direction in which the cart should move based on the pole's state
+    if pole_angle > 0:
+        direction = 1
+    else:
+        direction = 0
+
+    # Determine whether the pole is within the threshold values
+    if abs(pole_angle) < pole_threshold:
+        # Use a PID controller to adjust the direction of the cart to maintain balance
+        output = pid.update(-pole_angle, dt=0.02)
+        if abs(output) < 1.0:
+            action = direction
+        else:
+            action = 1 - direction
+
+    else:
+        # The pole is outside the threshold values, so push the cart back towards the center
+        action = 1 - direction
+
+    # Check if the cart has gone beyond the threshold values and return the corresponding action
+    if cart_position < -cart_threshold:
+        action = 1
+    elif cart_position > cart_threshold:
+        action = 0
+
+    return action

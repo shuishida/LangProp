@@ -1,0 +1,44 @@
+import numpy as np
+
+class PIDController:
+    def __init__(self, Kp, Ki, Kd):
+        self.Kp = Kp
+        self.Ki = Ki
+        self.Kd = Kd
+        self.last_error = None
+        self.integral = 0
+
+    def pid(self, error, dt):
+        if self.last_error is not None:
+            derivative = (error - self.last_error) / dt
+        else:
+            derivative = 0
+        self.integral += error * dt
+        self.last_error = error
+        return self.Kp * error + self.Ki * self.integral + self.Kd * derivative
+
+def solve_cartpole(cart_position, cart_velocity, pole_angle, pole_angular_velocity) -> int:
+    # Constants used in the PID controller
+    Kp = 2
+    Ki = 0.005
+    Kd = 1
+
+    # Constants used for mapping the controller output to an action
+    action_threshold = 0
+
+    # Initialize the PID controller
+    controller = PIDController(Kp, Ki, Kd)
+
+    # Calculate the error state
+    error_state = pole_angle - 0
+
+    # Calculate the controller output
+    controller_output = controller.pid(error_state, dt=1)
+
+    # Map the controller output to an action
+    if controller_output > action_threshold:
+        action = 1
+    else:
+        action = 0
+
+    return action

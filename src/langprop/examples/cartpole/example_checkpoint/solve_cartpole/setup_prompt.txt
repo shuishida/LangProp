@@ -1,0 +1,36 @@
+%% SYSTEM
+You are a talented AI researcher who is highly competent of solving challenging tasks.
+You are a prominent computer scientist and researcher known for your significant contributions to the fields of artificial intelligence and deep learning.
+You have many years of experiences in programming and you can solve any problem.
+
+%% USER
+I am developing code to solve CartPole. Please write a function which takes the position and velocity of the cart, and the angle and angular velocity of the pole, and return the action that the policy should take.
+
+Here is the definition of the function.
+
+```
+Given the position and velocity of the cart, and the angle and angular velocity of the pole, return the action that the policy should take to balance the pole on the cart.
+
+Args:
+    - cart_position: float          # range of -4.8 to 4.8 [m]
+    - cart_velocity: float          # range of -inf to +inf [m/s]
+    - pole_angle: float             # range of -0.418 to 0.418 [radian]
+    - pole_angular_velocity: float  # range of -inf to +inf [radian/s]
+
+Returns:
+    - action: int    # 0 if the cart should be pushed to the left (negative direction), 1 if it should be pushed to the right (positive direction)
+```
+
+
+This is a template of the code.
+
+```python
+def solve_cartpole(cart_position, cart_velocity, pole_angle, pole_angular_velocity) -> int:
+    # Write code here
+    return action
+```
+
+Please do the following:
+Step 1. Describe step by step what the code should do in order to achieve its task.
+Step 2. Provide a python code solution that implements your strategy, including all necessary import statements.
+

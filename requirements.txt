@@ -42,3 +42,6 @@ python-dotenv
 timeout-decorator
 importlib-metadata==4.13.0
 inputimeout
+openai==0.28
+py-sudoku
+pyglet==1.5.0

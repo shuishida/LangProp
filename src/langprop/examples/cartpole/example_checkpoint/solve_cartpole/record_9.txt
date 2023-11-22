@@ -1,0 +1,34 @@
+import numpy as np
+
+def solve_cartpole(cart_position: float, cart_velocity: float, pole_angle: float, pole_angular_velocity: float) -> int:
+    # Proportional gain
+    Kp = 0.5
+
+    # Maximum and minimum controller output
+    max_u = 10
+    min_u = -10
+
+    # Threshold for deciding between left, right, or no action
+    action_threshold = 0.1
+    
+    # Calculate the error
+    error = pole_angle
+
+    # Calculate the controller output
+    u = Kp * error
+
+    # Limit the controller output
+    if u > max_u:
+        u = max_u
+    elif u < min_u:
+        u = min_u
+
+    # Map the controller output to an action
+    if u > action_threshold:
+        action = 1  # push the cart to the right
+    elif u < -action_threshold:
+        action = 0  # push the cart to the left
+    else:
+        action = np.random.choice([0,1])  # take no action or choose randomly between left and right action
+        
+    return action

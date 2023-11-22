@@ -1,0 +1,7 @@
+import math
+
+def get_factorial(number: int) -> int:
+    if number <= 0:
+        return 1
+    else:
+        return math.factorial(number)

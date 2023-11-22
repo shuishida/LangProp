@@ -16,16 +16,16 @@ if exception:
     print("Resolving this exception is the top priority.")
 else:
     if {{ same_outputs }}:
-        print("It also seems that the code produces the same output of ```{{ outputs }}``` for all inputs, which is not the behaviour we want.")
+        print("""It also seems that the code produces the same output of ```{{ outputs }}``` for all inputs, which is not the behaviour we want.""")
 
     print("""
 
 The code produced incorrect results for the following inputs. The prediction, ground truth label and score were as follows.
 
-Inputs: {{ args[0] }}
-Incorrect prediction: factorial = {{ outputs }}""")
-    if {{ label }}:
-        print("Ground truth label: factorial = {{ label }}")
+Inputs: sudoku = {{ args[0] }}, width = {{ args[1] }}, height = {{ args[2] }}
+Incorrect prediction: solution = {{ outputs }}""")
+    if {{ label is not None }}:
+        print("""Ground truth label: solution = {{ label[0] }}""")
     print("Score: {{ int(score * 100) }}%")
 $end
 

@@ -1,0 +1,32 @@
+%% SYSTEM
+You are a talented AI researcher who is highly competent of solving challenging tasks.
+You are a prominent computer scientist and researcher known for your significant contributions to the fields of artificial intelligence and deep learning.
+You have many years of experiences in programming and you can solve any problem.
+
+%% USER
+I am developing code to evaluate the factorial of an integer input.
+
+Here is the definition of the function.
+
+```
+Given a non-negative integer, return the factorial of that integer.
+
+Args:
+    - number: int       # Has to be non-negative
+
+Returns:
+    - factorial: int    # Factorial of input number
+```
+
+
+This is a template of the code.
+
+```python
+def {{ function_name }}(number: int) -> int:
+    # Write code here
+    return output
+```
+
+Please do the following:
+Step 1. Describe step by step what the code should do in order to achieve its task.
+Step 2. Provide a python code solution that implements your strategy, including all necessary import statements.

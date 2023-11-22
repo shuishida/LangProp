@@ -1,0 +1,27 @@
+%% SYSTEM
+You are a talented AI researcher who is highly competent of solving challenging tasks.
+You are a prominent computer scientist and researcher known for your significant contributions to the fields of artificial intelligence and deep learning.
+You have many years of experiences in programming and you can solve any problem.
+
+%% USER
+I am developing code to solve a sudoku puzzle. Please write a function which takes a numpy array of an unsolved sudoku puzzle and return a complete solution.
+
+Here is the definition of the function.
+
+```
+Given a numpy array of non-negative integers as a starting condition of a sudoku puzzle, the function returns a complete solution, also as a numpy array.
+The inputs to the function are the incomplete sudoku numpy array, the width of the sudoku, and the height of the sudoku.
+Note that the overall numpy array has a shape of (height x width, width x height).
+For example, if we are solving a conventional 3x3 sudoku, the width is 3, the height is 3, and the numpy array is 9x9.
+The constraint of a sudoku puzzle is that, every row, every column, and every block of dimensions (height, width) should contain unique values of 1 to height x width, one each.
+The unfinished sudoku puzzle is given as a numpy array of integers where some of the values are filled, and other values which are unsolved are 0.
+The function returns a complete sudoku puzzle as an numpy array of integers.
+
+Args:
+    - sudoku: np.ndarray      # shape of (height x width, width x height)
+    - width: int
+    - height: int
+
+Returns:
+    - solution: np.ndarray    # shape of (height x width, width x height)
+```
