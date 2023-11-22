@@ -58,34 +58,43 @@ Then, watch LangProp generate better and better code.
     Override the `call_llm` method in the `LangAPI` class in [./src/langprop/lm_api.py](./src/langprop/lm_api.py). 
 
 ## Getting started with LangProp
-The self-contained code and documentation for the LangProp framework is under [./src/langprop](./src/langprop).
-
-We have prepared a very simple example of generating code that computes the factorial for a given integer input.
-The model definition is in `./src/langprop/examples/factorials/model`, the factorial dataset in `./src/langprop/examples/factorials/dataset.py`, and the training code in `./src/langprop/examples/factorials/run.py`.
+Please refer to the self-contained code and documentation for the LangProp framework under [./src/langprop](./src/langprop). 
 
 At the start, make sure you add `src` to the `PYTHONPATH` by running
 ```
 export PYTHONPATH=./src/:${PYTHONPATH}
 ```
+### Sudoku
+This example solves Sudoku. Instead of solving the standard 3x3 puzzle, we solve a general sudoku that consists of W x H subblocks, each with H x W elements.
+Due to the complexity in the specification, an LLM would often fail on the first attempt, but using LangProp allows us to filter out incorrect results and arrive at a fully working solution.
 
-### Running the setup prompt and getting an initial code generation
+#### Generate training dataset
+This only has to be done once to generate the training data.
 ```
-python ./src/langprop/examples/factorials/test_setup.py
-```
-
-You will find that a new `checkpoint.txt` has been generated in the directory `./src/langprop/examples/factorials/`.
-
-### Run a forward pass through the code that was generated in the previous step
-```
-python ./src/langprop/examples/factorials/test_policy.py
+python ./src/langprop/examples/sudoku/generate.py
 ```
 
-### Run a full training loop that involves updates in case there are any exceptions
+### Run training loop
 ```
-python ./src/langprop/examples/factorials/test_run.py
+python ./src/langprop/examples/sudoku/test_run.py
 ```
 
-The resulting code (which we call checkpoints) and the log of ChatGPT prompts and queries can be found in `lm_logs` in the root directory.
+The resulting code (which we call checkpoints) and the log of ChatGPT prompts and queries can be found in `lm_logs` in the root directory. 
+
+### CartPole
+This example solves `CartPole-v1` in openai gym (now part of gymnasium). Initially the LLM generates solutions which are simplistic and does not balance the CartPole.
+With a simple monte carlo method of optimizing the policy for the total rewards, we can obtain improved policies using LangProp.
+
+### Run training loop
+```
+python ./src/langprop/examples/cartpole/test_run.py
+```
+
+Here is a sample video of the training result:
+
+![Sample video of CartPole-v1](./src/langprop/examples/cartpole/sample_video.gif)
+
+The resulting code (which we call checkpoints) and the log of ChatGPT prompts and queries can be found in `lm_logs` in the root directory. An example checkpoint can be found at [./examples/cartpole/example_checkpoint](./examples/cartpole/example_checkpoint).
 
 # LangProp applied to driving in CARLA
 

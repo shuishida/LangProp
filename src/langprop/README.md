@@ -84,7 +84,7 @@ This only has to be done once to generate the training data.
 python ./src/langprop/examples/sudoku/generate.py
 ```
 
-### Run a full training loop
+### Run training loop
 ```
 python ./src/langprop/examples/sudoku/test_run.py
 ```
@@ -100,7 +100,7 @@ At the start, make sure you add `src` to the `PYTHONPATH` by running
 export PYTHONPATH=./src/:${PYTHONPATH}
 ```
 
-### Run a full training loop
+### Run training loop
 ```
 python ./src/langprop/examples/cartpole/test_run.py
 ```
