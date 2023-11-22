@@ -82,6 +82,8 @@ python ./src/langprop/examples/sudoku/test_run.py
 The resulting code (which we call checkpoints) and the log of ChatGPT prompts and queries can be found in `lm_logs` in the root directory. 
 - [Example prompts](./src/langprop/examples/sudoku/solve_sudoku).
 - [Example checkpoint](./src/langprop/examples/sudoku/example_checkpoint).
+- [Incorrect solution generated zero-shot](./src/langprop/examples/sudoku/example_checkpoint/incorrect_solution_zero_shot.txt)
+- [Correct solution after LangProp training](./src/langprop/examples/sudoku/example_checkpoint/correct_solution_after_langprop.txt)
 
 ### CartPole
 This example solves `CartPole-v1` in openai gym (now part of gymnasium). Initially the LLM generates solutions which are simplistic and does not balance the CartPole.

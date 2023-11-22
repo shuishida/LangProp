@@ -1,40 +1,44 @@
 import numpy as np
 
 def solve_cartpole(cart_position, cart_velocity, pole_angle, pole_angular_velocity) -> int:
-    # Constants used in the PID controller
-    Kp = 0.5
-    Ki = 0.001
-    Kd = 0.5
+    # Constants
+    GRAVITY = 9.81
+    CART_MASS = 1.0
+    POLE_MASS = 0.1
+    TOTAL_MASS = CART_MASS + POLE_MASS
+    LENGTH = 0.5  # Length of the pole
+    POLE_MOMENT_OF_INERTIA = POLE_MASS * LENGTH ** 2
+    MAX_FORCE = 10.0  # Maximum force that can be applied to the cart
 
-    # Constants used for mapping the controller output to an action
-    zero_action = 0
-    positive_action = 1
-
-    # Define the state vector
+    # State variables
     state = np.array([cart_position, cart_velocity, pole_angle, pole_angular_velocity])
 
-    # Define the target state (i.e., the state we want to achieve)
-    target = np.array([0, 0, 0, 0])
+    # Controller gains
+    Kp = np.array([-30.0, -150.0, -450.0, -150.0])
+    Kd = np.array([-10.0, -50.0, -200.0, -50.0])
 
-    # Define the state error and integrate it
-    if 'integral' not in solve_cartpole.__dict__:
-        solve_cartpole.integral = np.zeros(4)
-        
-    error = target - state
-    solve_cartpole.integral += error
-    
-    # Compute the controller output
-    proportional = Kp * error
-    integral = Ki * solve_cartpole.integral
-    derivative = Kd * state[3]
-    controller_output = np.sum(proportional + integral + derivative)
-    
-    # Convert the controller output to an action
-    if controller_output < 0:
-        action = zero_action  # push the cart to the left
-    elif controller_output > 0:
-        action = positive_action  # push the cart to the right
+    # Compute the required force to balance the pole
+    angle = state[2]
+    angular_velocity = state[3]
+    sin_angle = np.sin(angle)
+    cos_angle = np.cos(angle)
+    total_mass = CART_MASS + POLE_MASS
+    pole_mass_length = POLE_MASS * LENGTH
+    temp = POLE_MOMENT_OF_INERTIA * total_mass + pole_mass_length ** 2
+    angular_acceleration = (GRAVITY * sin_angle + 
+                            pole_mass_length * (angular_velocity ** 2) * sin_angle * cos_angle / total_mass -
+                            (MAX_FORCE * cos_angle) / temp * (pole_mass_length * sin_angle / total_mass +
+                            LENGTH * sin_angle))
+    required_force = CART_MASS * angular_acceleration + POLE_MASS * LENGTH * angular_acceleration / total_mass
+
+    # Compute the control signal
+    cart_acceleration = required_force / CART_MASS
+    control_signal = -Kp.dot(state) - Kd.dot(state) + cart_acceleration
+
+    # Compute the action
+    if control_signal >= 0:
+        action = 1
     else:
-        action = zero_action  # no action needed
+        action = 0
 
     return action

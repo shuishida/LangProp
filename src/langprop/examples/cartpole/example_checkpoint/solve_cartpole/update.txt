@@ -28,7 +28,7 @@ Here is an example code that I have written. However, it is not working as expec
 {{ code }}
 ```
 
-I executed the code, but the performance was not very high.
+I executed the code, but the performance was not very high. I got a score of {{ int(avg_score) }} where a good score is 500.
 
 $begin
 if printed:

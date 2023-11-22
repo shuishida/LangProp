@@ -1,21 +1,74 @@
 import numpy as np
+import gym
+
+# Set the learning rate, discount factor, and exploration rate
+alpha = 0.1
+gamma = 0.9
+epsilon = 0.1
+
+# Initialize the Q-table
+Q = np.zeros((50, 50, 50, 50, 2))
+
+def state_to_index(state):
+    scale_factors = [10.0, 10.0, 50.0, 50.0]
+    return tuple(np.round(state * scale_factors).astype(int))
+
+def get_action(state):
+    if np.random.rand() < epsilon:
+        action = np.random.randint(2)
+    else:
+        state_index = state_to_index(state)
+        action = np.argmax(Q[state_index])
+    return action
+
+def update_Q(prev_state, action, reward, state):
+    prev_index = state_to_index(prev_state)
+    index = state_to_index(state)
+    Q[prev_index + (action,)] += alpha * (reward + gamma * np.max(Q[index]) - Q[prev_index + (action,)])
 
 def solve_cartpole(cart_position, cart_velocity, pole_angle, pole_angular_velocity) -> int:
+    # Rescale the state to 50 x 50 x 50 x 50 grid
+    state = np.array([cart_position / 1.2, cart_velocity / 0.07, pole_angle / 0.17, pole_angular_velocity / 0.1])
 
-    # Set the threshold for the pole angle
-    threshold_angle = 0.1
-    
-    # Check the angle of the pole
-    if np.abs(pole_angle) < threshold_angle:
-        # If the angle is small enough, take no action
-        action = 0
-    else:
-        # If the angle is too large, push the cart in the direction of the pole
-        if pole_angle > 0:
-            # Push the cart to the right
-            action = 1
-        else:
-            # Push the cart to the left
-            action = 0
-    
+    # Choose an action using epsilon-greedy policy
+    action = get_action(state)
+
+    return action
+
+# Train the Q-learning algorithm for 500 episodes
+env = gym.make('CartPole-v0')
+for i_episode in range(500):
+    state = env.reset()
+    total_reward = 0
+    done = False
+    while not done:
+        action = get_action(state)
+        next_state, reward, done, info = env.step(action)
+        update_Q(state, action, reward, next_state)
+        state = next_state
+        total_reward += reward
+    print("Episode {}: Total Reward = {}".format(i_episode, total_reward))
+
+env.close()
+
+# Choose the optimal policy based on the learned Q-values
+def get_optimal_policy():
+    optimal_policy = np.zeros((50, 50, 50, 50))
+    for i in range(50):
+        for j in range(50):
+            for k in range(50):
+                for l in range(50):
+                    optimal_policy[i, j, k, l] = np.argmax(Q[i, j, k, l])
+    return optimal_policy
+
+optimal_policy = get_optimal_policy()
+
+def solve_cartpole(cart_position, cart_velocity, pole_angle, pole_angular_velocity) -> int:
+    # Rescale the state to 50 x 50 x 50 x 50 grid
+    state = np.array([cart_position / 1.2, cart_velocity / 0.07, pole_angle / 0.17, pole_angular_velocity / 0.1])
+
+    # Choose the optimal action based on the learned Q-values
+    state_index = state_to_index(state)
+    action = int(optimal_policy[state_index])
+
     return action

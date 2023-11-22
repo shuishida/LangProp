@@ -1,28 +1,60 @@
 import gym
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import torch.nn.functional as F
+from torch.distributions import Categorical
 
-def solve_cartpole(cart_position: float, cart_velocity: float, pole_angle: float, pole_angular_velocity: float) -> int:
-    # Create an instance of the CartPole environment
-    env = gym.make('CartPole-v1')
+class Policy(nn.Module):
+    def __init__(self):
+        super(Policy, self).__init__()
+        self.fc1 = nn.Linear(4, 128)
+        self.fc2 = nn.Linear(128, 2)
 
-    # Reset the environment and set the state
-    state = env.reset()
-    state[0], state[1], state[2], state[3] = cart_position, cart_velocity, pole_angle, pole_angular_velocity
-    env.state = state
+    def forward(self, x):
+        x = F.relu(self.fc1(x))
+        x = F.softmax(self.fc2(x), dim=1)
+        return x
 
-    # Define the policy function
-    def policy(observation):
-        cart_pos, cart_vel, pole_ang, pole_vel = observation
-        # Use a set of rules to determine the appropriate action to take
-        # If the pole is tilted to the right and the cart is moving to the right, or the pole is tilted to the left and the cart is moving to the left, push the cart in the same direction
-        # Otherwise, push the cart in the opposite direction
-        if (pole_ang > 0 and pole_vel > 0 and cart_vel > 0) or (pole_ang < 0 and pole_vel < 0 and cart_vel < 0):
-            action = 1
-        else:
-            action = 0
-        return action
+def select_action(state, policy):
+    state = torch.from_numpy(state).float().unsqueeze(0)
+    probs = policy(state)
+    m = Categorical(probs)
+    action = m.sample()
+    return action.item(), m.log_prob(action)
 
-    # Apply policy function to the current state
-    action = policy(state)
+def update_policy(policy, optimizer, rewards, log_probs, gamma=0.99, eps=0.1):
+    R = 0
+    returns = []
+    for r in rewards[::-1]:
+        R = r + gamma * R
+        returns.insert(0, R)
+    returns = torch.tensor(returns)
+    returns = (returns - returns.mean()) / returns.std()
+    policy_loss = []
+    for log_prob, R in zip(log_probs, returns):
+        policy_loss.append(-log_prob * R)
+    policy_loss = torch.cat(policy_loss).sum()
+    optimizer.zero_grad()
+    policy_loss.backward()
+    optimizer.step()
+    return policy
 
-    # Return the action
+def solve_cartpole(cart_position, cart_velocity, pole_angle, pole_angular_velocity) -> int:
+    env = gym.make('CartPole-v0')
+    policy = Policy()
+    optimizer = optim.Adam(policy.parameters(), lr=1e-3)
+    state = [cart_position, cart_velocity, pole_angle, pole_angular_velocity]
+    rewards = []
+    log_probs = []
+    for t in range(500):
+        action, log_prob = select_action(state, policy)
+        observation, reward, done, info = env.step(action)
+        rewards.append(reward)
+        log_probs.append(log_prob)
+        if done:
+            policy = update_policy(policy, optimizer, rewards, log_probs)
+            return action
+        state = observation
+    env.close()
     return action

@@ -1,41 +1,31 @@
 import numpy as np
 
+def solve_cartpole(cart_position: float, cart_velocity: float, pole_angle: float, pole_angular_velocity: float) -> int:
 
-def solve_cartpole(cart_position, cart_velocity, pole_angle, pole_angular_velocity) -> int:
-    # Define the system parameters
-    cart_threshold = 2.4
-    pole_threshold = 0.209
-    kp = 1
-    ki = 0.01
-    kd = 1
-
-    # Define the PID errors
-    err = pole_angle
-    err_int = 0
-    err_der = 0
-
-    # Compute the integral error
-    if abs(err) < pole_threshold:
-        err_int += err
-    else:
-        err_int = 0
-
-    # Compute the derivative error
-    err_der = pole_angular_velocity
-
-    # Compute the control output
-    output = kp * err + ki * err_int + kd * err_der
-
-    # Check if the cart is on the left or right of the threshold
-    if cart_position < -cart_threshold:
+    # Define the constants for the PD controller
+    kp_pole = 0.5
+    kd_pole = 0.1
+    
+    kp_cart = 0.2
+    kd_cart = 0.05
+    
+    # Compute error signals and their derivatives
+    pole_error = pole_angle
+    pole_error_derivative = pole_angular_velocity
+    
+    cart_error = cart_position
+    cart_error_derivative = cart_velocity
+    
+    # Compute the control signals for the pole and cart using PD controllers
+    pole_control_signal = kp_pole * pole_error + kd_pole * pole_error_derivative
+    cart_control_signal = kp_cart * cart_error + kd_cart * cart_error_derivative
+    
+    # Combine the control signals to get the final action
+    if pole_control_signal < -cart_control_signal:
         action = 0
-    elif cart_position > cart_threshold:
+    elif pole_control_signal > cart_control_signal:
         action = 1
     else:
-        # Apply the control output to the cart
-        if output < 0:
-            action = 0
-        else:
-            action = 1
-
+        action = 1
+        
     return action

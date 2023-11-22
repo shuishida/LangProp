@@ -1,17 +1,5 @@
-import math
-
 def solve_cartpole(cart_position, cart_velocity, pole_angle, pole_angular_velocity) -> int:
-    # Constants used in the policy
-    angle_limit = 0.20944
-    velocity_limit = 2
-
-    # Calculate the angle of the pole
-    pole_angle = pole_angle / angle_limit
-
-    # Decide which direction the car needs to move.
     if pole_angle > 0:
-        action = 1
+        return 1  # push cart to the right
     else:
-        action = 0
-
-    return action
+        return 0  # push cart to the left

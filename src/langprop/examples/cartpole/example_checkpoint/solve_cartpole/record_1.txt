@@ -1,33 +1,31 @@
-import math
+import numpy as np
+import gym
+
+# Initialize the environment
+env = gym.make('CartPole-v1')
+
+# Initialize the PID controller with some default parameters
+kp = 0.5  # Proportional gain
+ki = 0.05  # Integral gain
+kd = 0.2  # Derivative gain
+integral_error = 0.0  # Initialize the integral error
 
 def solve_cartpole(cart_position, cart_velocity, pole_angle, pole_angular_velocity) -> int:
-    # Constants used in the PID controller
-    Kp = 1
-    Ki = 0.001
-    Kd = 10
+    # Calculate the error between the pole angle and zero
+    angle_error = pole_angle
 
-    # Constants used for mapping the controller output to an action
-    cart_direction_threshold = 0.05
-    zero_action = 0
-    positive_action = 1
+    # Calculate the error between the cart position and zero
+    position_error = cart_position
 
-    # Calculate the error state
-    error_state = pole_angle - 0
+    # Update the integral error
+    global integral_error
+    integral_error += angle_error
 
-    # Calculate the proportional, integral, and derivative components of the PID controller
-    proportional = Kp * error_state
-    integral = Ki * error_state
-    derivative = Kd * pole_angular_velocity
+    # Calculate the PID controller output
+    pid_output = kp*angle_error + ki*integral_error + kd*pole_angular_velocity
 
-    # Calculate the controller output
-    controller_output = proportional + integral + derivative
-
-    # Convert the controller output to an action
-    if controller_output < -cart_direction_threshold:
-        action = zero_action  # push the cart to the left
-    elif controller_output > cart_direction_threshold:
-        action = positive_action  # push the cart to the right
-    else:
-        action = zero_action  # no action needed
+    # Convert the PID controller output to the range of 0 to 1
+    action = np.clip(pid_output, -1, 1)
+    action = int(np.round((action + 1)/2))
 
     return action
