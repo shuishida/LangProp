@@ -80,6 +80,8 @@ python ./src/langprop/examples/sudoku/test_run.py
 ```
 
 The resulting code (which we call checkpoints) and the log of ChatGPT prompts and queries can be found in `lm_logs` in the root directory. 
+- [Example prompts](./src/langprop/examples/sudoku/solve_sudoku).
+- [Example checkpoint](./src/langprop/examples/sudoku/example_checkpoint).
 
 ### CartPole
 This example solves `CartPole-v1` in openai gym (now part of gymnasium). Initially the LLM generates solutions which are simplistic and does not balance the CartPole.
@@ -94,7 +96,11 @@ Here is a sample video of the training result:
 
 ![Sample video of CartPole-v1](./src/langprop/examples/cartpole/sample_video.gif)
 
-The resulting code (which we call checkpoints) and the log of ChatGPT prompts and queries can be found in `lm_logs` in the root directory. An example checkpoint can be found at [./examples/cartpole/example_checkpoint](./examples/cartpole/example_checkpoint).
+The resulting code (which we call checkpoints) and the log of ChatGPT prompts and queries can be found in `lm_logs` in the root directory. 
+- [Example prompts](./src/langprop/examples/cartpole/solve_cartpole).
+- [Example checkpoint](./src/langprop/examples/cartpole/example_checkpoint).
+- [Policy generated zero-shot](./src/langprop/examples/cartpole/example_checkpoint/zero_shot_policy.txt)
+- [Policy after LangProp training](./src/langprop/examples/cartpole/example_checkpoint/trained_policy.txt)
 
 # LangProp applied to driving in CARLA
 

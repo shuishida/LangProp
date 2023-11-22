@@ -1,0 +1,21 @@
+import numpy as np
+
+def solve_cartpole(cart_position, cart_velocity, pole_angle, pole_angular_velocity) -> int:
+
+    # Set the threshold for the pole angle
+    threshold_angle = 0.1
+
+    # Check the angle of the pole
+    if np.abs(pole_angle) < threshold_angle:
+        # If the angle is small enough, take no action
+        action = 0
+    else:
+        # If the angle is too large, push the cart in the direction of the pole
+        if pole_angle > 0:
+            # Push the cart to the right
+            action = 1
+        else:
+            # Push the cart to the left
+            action = 0
+
+    return action

@@ -66,7 +66,8 @@ python ./src/langprop/examples/factorials/test_policy.py
 python ./src/langprop/examples/factorials/test_run.py
 ```
 
-The resulting code (which we call checkpoints) and the log of ChatGPT prompts and queries can be found in `lm_logs` in the root directory. An example checkpoint can be found at [./examples/factorials/example_checkpoint](./examples/factorials/example_checkpoint).
+The resulting code (which we call checkpoints) and the log of ChatGPT prompts and queries can be found in `lm_logs` in the root directory. 
+- [Example checkpoint](./examples/factorials/example_checkpoint).
 
 ## More examples
 ### Sudoku
@@ -89,7 +90,9 @@ python ./src/langprop/examples/sudoku/generate.py
 python ./src/langprop/examples/sudoku/test_run.py
 ```
 
-The resulting code (which we call checkpoints) and the log of ChatGPT prompts and queries can be found in `lm_logs` in the root directory. An example checkpoint can be found at [./examples/sudoku/example_checkpoint](./examples/sudoku/example_checkpoint).
+The resulting code (which we call checkpoints) and the log of ChatGPT prompts and queries can be found in `lm_logs` in the root directory. 
+- [Example prompts](./examples/sudoku/solve_cartpole).
+- [Example checkpoint](./examples/sudoku/example_checkpoint).
 
 ### CartPole
 This example solves `CartPole-v1` in openai gym (now part of gymnasium). Initially the LLM generates solutions which are simplistic and does not balance the CartPole.
@@ -111,7 +114,11 @@ Here is a sample video of the training result:
 
 ![Sample video of CartPole-v1](./examples/cartpole/sample_video.gif)
 
-The resulting code (which we call checkpoints) and the log of ChatGPT prompts and queries can be found in `lm_logs` in the root directory. An example checkpoint can be found at [./examples/cartpole/example_checkpoint](./examples/cartpole/example_checkpoint).
+The resulting code (which we call checkpoints) and the log of ChatGPT prompts and queries can be found in `lm_logs` in the root directory. 
+- [Example prompts](./examples/cartpole/solve_cartpole).
+- [Example checkpoint](./examples/cartpole/example_checkpoint).
+- [Policy generated zero-shot](./examples/cartpole/example_checkpoint/zero_shot_policy.txt)
+- [Policy after LangProp training](./examples/cartpole/example_checkpoint/trained_policy.txt)
 
 ## Template engine
 

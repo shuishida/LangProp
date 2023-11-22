@@ -1,0 +1,41 @@
+import numpy as np
+
+
+def solve_cartpole(cart_position, cart_velocity, pole_angle, pole_angular_velocity) -> int:
+    # Define the system parameters
+    cart_threshold = 2.4
+    pole_threshold = 0.209
+    kp = 1
+    ki = 0.01
+    kd = 1
+
+    # Define the PID errors
+    err = pole_angle
+    err_int = 0
+    err_der = 0
+
+    # Compute the integral error
+    if abs(err) < pole_threshold:
+        err_int += err
+    else:
+        err_int = 0
+
+    # Compute the derivative error
+    err_der = pole_angular_velocity
+
+    # Compute the control output
+    output = kp * err + ki * err_int + kd * err_der
+
+    # Check if the cart is on the left or right of the threshold
+    if cart_position < -cart_threshold:
+        action = 0
+    elif cart_position > cart_threshold:
+        action = 1
+    else:
+        # Apply the control output to the cart
+        if output < 0:
+            action = 0
+        else:
+            action = 1
+
+    return action
