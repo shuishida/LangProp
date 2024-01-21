@@ -50,5 +50,4 @@ cd $CARLA911_ROOT
 #fi
 
 git submodule update --init --recursive
-git lfs pull
 git submodule update --recursive --remote

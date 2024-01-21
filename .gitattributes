@@ -1,2 +1,0 @@
-src/weights/** filter=lfs diff=lfs merge=lfs -text
-videos/** filter=lfs diff=lfs merge=lfs -text
