@@ -241,6 +241,16 @@ The training statistics are logged in Weights and Biases. The URL to the log wil
    bash scripts/data_collect/lmdrive_eval.sh <RUN_NAME>
    ```
 
+### (Optional) Download third-party weights
+Weights for RGB-based agents by TCP and InterFuser can be downloaded from their respective repositories.
+#### TCP
+Download the model from a [OneDrive link](https://hkustconnect-my.sharepoint.com/:u:/g/personal/qzhangcb_connect_ust_hk/ETe4OX79JldIsvgNGIs5NmIBkJnfPDG2G5Ij-8ha518rOw?e=BG1dek) and place it in `./weights/tcp/TCP.ckpt`.
+This link was obtained from https://github.com/OpenDriveLab/TCP/issues/11. 
+
+#### InterFuser
+Download the model from [here](http://43.159.60.142/s/p2CN) and place it in `./weights/interfuser/interfuser.pth.tar`.
+This link was obtained from the [official repository](https://github.com/opendilab/InterFuser#pretrain-weights).
+
 ## Third-party baselines
 Third party baselines are cloned into the repository as git submodules. The evaluation scripts are under the [./scripts/eval_expert](./scripts/eval_expert) directory.
 
