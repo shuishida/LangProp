@@ -3,6 +3,7 @@
 ![LangProp driving in CARLA](./assets/langprop_carla_run.gif)
 
 **Paper:** [LangProp: A code optimization framework using Language Models applied to driving](https://arxiv.org/abs/2401.10314)
+
 **Authors:** Shu Ishida, Gianluca Corrado, George Fedoseev, Hudson Yeo, Lloyd Russell, Jamie Shotton, João F. Henriques, Anthony Hu
 
 
