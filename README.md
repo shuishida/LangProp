@@ -2,6 +2,10 @@
 
 ![LangProp driving in CARLA](./assets/langprop_carla_run.gif)
 
+Shu Ishida, Gianluca Corrado, George Fedoseev, Hudson Yeo, Lloyd Russell, Jamie Shotton, João F. Henriques, Anthony Hu
+
+Paper: [arXiv](https://arxiv.org/abs/2401.10314)
+
 ## About
 LangProp is a framework for generating code using ChatGPT, and evaluate the code performance against a dataset of expected 
 outputs in a supervised/reinforcement learning setting. Usually, ChatGPT generates code which is sensible but fails for some edge cases, and then you need to go back and prompt ChatGPT again with the error.
@@ -275,6 +279,19 @@ To run the baselines, refer to the `README.md` files under the [./3rdparty](./3r
 
 ### Submitting an agent to leaderboard 1.0
 - https://leaderboard.carla.org/submit_v1/
+
+## Citation
+
+If you find our work useful, please cite our work as follows:
+```
+@article{ishida2024langprop,
+      title={LangProp: A code optimization framework using Language Models applied to driving}, 
+      author={Shu Ishida and Gianluca Corrado and George Fedoseev and Hudson Yeo and Lloyd Russell and Jamie Shotton and João F. Henriques and Anthony Hu},
+      year={2024},
+      journal={arXiv preprint arXiv:2401.10314},
+      publisher={arXiv},
+}
+```
 
 ## Acknowledgements
 This implementation is based on code from several repositories.
