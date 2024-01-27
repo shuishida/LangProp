@@ -30,7 +30,7 @@ Then, watch LangProp generate better and better code.
     conda activate langprop
     pip install -r requirements.txt
     ```
-2. Install git and git lfs (`git lfs install`)
+2. Install git
 3. Clone the repository
 4. Run the setup script
     ```
