@@ -2,7 +2,9 @@
 
 ![LangProp driving in CARLA](./assets/langprop_carla_run.gif)
 
-**Paper:** [LangProp: A code optimization framework using Language Models applied to driving](https://arxiv.org/abs/2401.10314)
+**Paper:** LangProp: A code optimization framework using Language Models applied to driving
+- [ICLR 2024 Workshop on Large Language Model (LLM) Agents](https://openreview.net/pdf?id=JQJJ9PkdYC)
+- [arXiv](https://arxiv.org/abs/2401.10314)
 
 **Authors:** Shu Ishida, Gianluca Corrado, George Fedoseev, Hudson Yeo, Lloyd Russell, Jamie Shotton, João F. Henriques, Anthony Hu
 
@@ -285,12 +287,13 @@ To run the baselines, refer to the `README.md` files under the [./3rdparty](./3r
 
 If you find our work useful, please cite our work as follows:
 ```
-@article{ishida2024langprop,
-      title={LangProp: A code optimization framework using Language Models applied to driving}, 
-      author={Shu Ishida and Gianluca Corrado and George Fedoseev and Hudson Yeo and Lloyd Russell and Jamie Shotton and João F. Henriques and Anthony Hu},
-      year={2024},
-      journal={arXiv preprint arXiv:2401.10314},
-      publisher={arXiv},
+@inproceedings{
+ishida2024langprop,
+title={LangProp: A code optimization framework using Large Language Models applied to driving},
+author={Shu Ishida and Gianluca Corrado and George Fedoseev and Hudson Yeo and Lloyd Russell and Jamie Shotton and Joao F. Henriques and Anthony Hu},
+booktitle={ICLR 2024 Workshop on Large Language Model (LLM) Agents},
+year={2024},
+url={https://openreview.net/forum?id=JQJJ9PkdYC}
 }
 ```
 
