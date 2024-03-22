@@ -66,7 +66,7 @@ class LPTrainer:
             exception_detail = f"""\nThere was an exception of the following:\n{type(exception).__name__}: {exception_trace}"""
         return score, exception_detail
 
-    def fit_batch(self, batch: list, tag, step, metric: Optional[Callable[[Any, Any], float]] = None, tracker_mode: str = "main", sort_pre_update: bool = True):
+    def fit_batch(self, batch: list, tag, step, metric: Optional[Callable[[Any, Any], float]] = None, tracker_mode: str = "main", sort_pre_update: bool = True, add_log: bool = True):
         self.set_active_modules(self.module)
         forward_execution_time_start = time.time()
         for data in batch:
@@ -102,7 +102,8 @@ class LPTrainer:
             f"update_time_{tracker_mode}": module_update_time,
             f"post_update_time_{tracker_mode}": module_post_update_time
         }
-        wandb.log(time_info)
+        if add_log:
+            wandb.log(time_info)
         return time_info
 
     def val_batch(self, batch: list, step, metric: Optional[Callable[[Any, Any], float]] = None):

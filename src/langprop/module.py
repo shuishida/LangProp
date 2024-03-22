@@ -1,4 +1,4 @@
-import inspect
+import warnings
 import json
 import os.path
 import random
@@ -61,7 +61,7 @@ def extract_imports_and_functions(python_code: str):
 
 class RunConfig:
     def __init__(self, run_name="", root_dir=None, trackers_config: Optional[dict] = None,
-                 n_responses: int = 1, n_top_choices: int = 1, max_keep: int = 4,
+                 n_responses: int = 2, n_top_choices: int = 3, max_keep: int = 4,
                  exception_score: float = -1, forward_timeout: int = 5, n_tries: int = 10, save_config: Optional[dict] = None):
         self.run_name = run_name or datetime.now().strftime("%Y%m%d_%H%M%S")
         self.save_config = save_config
@@ -75,6 +75,11 @@ class RunConfig:
         self.lang_api = LangAPI(n_responses, n_tries)
         self.modules: Dict[str, LPModule] = {}
         self.tracker_stack = []
+
+        if n_responses == 1:
+            warnings.warn("Warning: n_responses for LangProp is set to 1. We recommend increasing this value for more diverse policies.")
+        if n_top_choices == 1:
+            warnings.warn("Warning: n_top_choices for LangProp is set to 1. We recommend increasing this value for more diverse policies")
 
         if wandb.run is None:
             print("Initializing WandB...")
