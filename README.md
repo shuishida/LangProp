@@ -1,11 +1,12 @@
-# LangProp: A code optimization framework using Language Models applied to driving
+# LangProp: A code optimization framework using Large Language Models applied to driving
 
 ![LangProp driving in CARLA](./assets/langprop_carla_run.gif)
 
-**Paper:** [LangProp: A code optimization framework using Language Models applied to driving](https://arxiv.org/abs/2401.10314)
+**Paper:** LangProp: A code optimization framework using Large Language Models applied to driving
 
 **Authors:** Shu Ishida, Gianluca Corrado, George Fedoseev, Hudson Yeo, Lloyd Russell, Jamie Shotton, João F. Henriques, Anthony Hu
-
+- [ICLR 2024 Workshop on Large Language Model (LLM) Agents](https://openreview.net/pdf?id=JQJJ9PkdYC)
+- [arXiv](https://arxiv.org/abs/2401.10314)
 
 ## About
 LangProp is a framework for generating code using ChatGPT, and evaluate the code performance against a dataset of expected 
@@ -23,6 +24,19 @@ Then, watch LangProp generate better and better code.
 
 ![Overview of the LangProp framework](./assets/langprop_overview.png)
 
+**Citation:**
+
+If you find our work useful, please cite our work as follows:
+```
+@inproceedings{
+ishida2024langprop,
+title={LangProp: A code optimization framework using Large Language Models applied to driving},
+author={Shu Ishida and Gianluca Corrado and George Fedoseev and Hudson Yeo and Lloyd Russell and Jamie Shotton and Joao F. Henriques and Anthony Hu},
+booktitle={ICLR 2024 Workshop on Large Language Model (LLM) Agents},
+year={2024},
+url={https://openreview.net/forum?id=JQJJ9PkdYC}
+}
+```
 ## Setup
 1. Install anaconda or miniconda
     ```bash
@@ -280,19 +294,6 @@ To run the baselines, refer to the `README.md` files under the [./3rdparty](./3r
 
 ### Submitting an agent to leaderboard 1.0
 - https://leaderboard.carla.org/submit_v1/
-
-## Citation
-
-If you find our work useful, please cite our work as follows:
-```
-@article{ishida2024langprop,
-      title={LangProp: A code optimization framework using Language Models applied to driving}, 
-      author={Shu Ishida and Gianluca Corrado and George Fedoseev and Hudson Yeo and Lloyd Russell and Jamie Shotton and João F. Henriques and Anthony Hu},
-      year={2024},
-      journal={arXiv preprint arXiv:2401.10314},
-      publisher={arXiv},
-}
-```
 
 ## Acknowledgements
 This implementation is based on code from several repositories.
