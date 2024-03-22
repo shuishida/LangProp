@@ -1,8 +1,8 @@
-# LangProp: A code optimization framework using Language Models applied to driving
+# LangProp: A code optimization framework using Large Language Models applied to driving
 
 ![LangProp driving in CARLA](./assets/langprop_carla_run.gif)
 
-**Paper:** LangProp: A code optimization framework using Language Models applied to driving
+**Paper:** LangProp: A code optimization framework using Large Language Models applied to driving
 
 **Authors:** Shu Ishida, Gianluca Corrado, George Fedoseev, Hudson Yeo, Lloyd Russell, Jamie Shotton, João F. Henriques, Anthony Hu
 - [ICLR 2024 Workshop on Large Language Model (LLM) Agents](https://openreview.net/pdf?id=JQJJ9PkdYC)
