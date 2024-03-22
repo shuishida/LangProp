@@ -8,6 +8,20 @@
 - [ICLR 2024 Workshop on Large Language Model (LLM) Agents](https://openreview.net/pdf?id=JQJJ9PkdYC)
 - [arXiv](https://arxiv.org/abs/2401.10314)
 
+## Citation
+
+If you find our work useful, please cite our work as follows:
+```
+@inproceedings{
+ishida2024langprop,
+title={LangProp: A code optimization framework using Large Language Models applied to driving},
+author={Shu Ishida and Gianluca Corrado and George Fedoseev and Hudson Yeo and Lloyd Russell and Jamie Shotton and Joao F. Henriques and Anthony Hu},
+booktitle={ICLR 2024 Workshop on Large Language Model (LLM) Agents},
+year={2024},
+url={https://openreview.net/forum?id=JQJJ9PkdYC}
+}
+```
+
 ## About
 LangProp is a framework for generating code using ChatGPT, and evaluate the code performance against a dataset of expected 
 outputs in a supervised/reinforcement learning setting. Usually, ChatGPT generates code which is sensible but fails for some edge cases, and then you need to go back and prompt ChatGPT again with the error.
@@ -281,20 +295,6 @@ To run the baselines, refer to the `README.md` files under the [./3rdparty](./3r
 
 ### Submitting an agent to leaderboard 1.0
 - https://leaderboard.carla.org/submit_v1/
-
-## Citation
-
-If you find our work useful, please cite our work as follows:
-```
-@inproceedings{
-ishida2024langprop,
-title={LangProp: A code optimization framework using Large Language Models applied to driving},
-author={Shu Ishida and Gianluca Corrado and George Fedoseev and Hudson Yeo and Lloyd Russell and Jamie Shotton and Joao F. Henriques and Anthony Hu},
-booktitle={ICLR 2024 Workshop on Large Language Model (LLM) Agents},
-year={2024},
-url={https://openreview.net/forum?id=JQJJ9PkdYC}
-}
-```
 
 ## Acknowledgements
 This implementation is based on code from several repositories.
