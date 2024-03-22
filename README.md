@@ -8,7 +8,7 @@
 - [ICLR 2024 Workshop on Large Language Model (LLM) Agents](https://openreview.net/pdf?id=JQJJ9PkdYC)
 - [arXiv](https://arxiv.org/abs/2401.10314)
 
-## Citation
+**Citation:**
 
 If you find our work useful, please cite our work as follows:
 ```
